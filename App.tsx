@@ -11,7 +11,7 @@ import StatusDisplay from './components/StatusDisplay'; // If you use this
 import AdminLogin from './components/AdminLogin'; // If you use this
 
 // === CONFIGURATION ===
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0lWnVu51DoaswLTDF2DP4qpLMgKjaqV5CWbii2CloMOB1I3dbqk-fTn7QTCtOmIX7DA/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec';
 
 // --- HELPER FUNCTIONS ---
 const getDeviceId = async () => {
