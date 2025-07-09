@@ -7,8 +7,8 @@ import TabBar from './components/TabBar';
 import TimePanel from './components/TimePanel';
 import AbsencePanel from './components/AbsencePanel';
 import TimesheetPanel from './components/TimesheetPanel';
-import StatusDisplay from './components/StatusDisplay'; // If you use this
-import AdminLogin from './components/AdminLogin'; // If you use this
+import StatusDisplay from './components/StatusDisplay';
+import AdminLogin from './components/AdminLogin';
 
 // === CONFIGURATION ===
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec';
@@ -51,8 +51,6 @@ const Header: React.FC = () => (
     </div>
 );
 
-// ... TabBar, StatusDisplay, UserInfoForm, TimePanel, AbsencePanel, TimesheetPanel, AdminLogin ... (unchanged from your original code)
-
 // --- MAIN APP COMPONENT ---
 
 const App: React.FC = () => {
@@ -73,9 +71,20 @@ const App: React.FC = () => {
     // === API UTILS ===
     const fetchTimeLogs = useCallback(() => {
         if (!userInfo.employeeId) return;
-        fetch(`${SCRIPT_URL}?type=timelog&employeeId=${encodeURIComponent(userInfo.employeeId)}`)
-            .then(res => res.json())
-            .then(data => setTimeLogs(
+        
+        fetch(`${SCRIPT_URL}?type=timelog&employeeId=${encodeURIComponent(userInfo.employeeId)}`, {
+            mode: 'cors', // Explicitly request CORS
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            // Keep your existing data mapping
+            setTimeLogs(
                 data.map((row: any[]) => ({
                     firstName: row[0],
                     lastName: row[1],
@@ -91,15 +100,35 @@ const App: React.FC = () => {
                     userAgent: row[11],
                     duration: row[12],
                 }))
-            ))
-            .catch(() => setTimeLogs([]));
+            );
+        })
+        .catch(err => {
+            console.error("Error fetching time logs:", err);
+            setTimeLogs([]);
+            setStatus({
+                type: 'error',
+                title: 'API Error',
+                details: 'Could not load time logs. Please check your connection and try again.'
+            });
+            clearStatus();
+        });
     }, [userInfo.employeeId]);
 
     const fetchAbsenceLogs = useCallback(() => {
         if (!userInfo.employeeId) return;
-        fetch(`${SCRIPT_URL}?type=absencelog&employeeId=${encodeURIComponent(userInfo.employeeId)}`)
-            .then(res => res.json())
-            .then(data => setAbsenceLogs(
+        
+        fetch(`${SCRIPT_URL}?type=absencelog&employeeId=${encodeURIComponent(userInfo.employeeId)}`, {
+            mode: 'cors', // Explicitly request CORS
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            setAbsenceLogs(
                 data.map((row: any[]) => ({
                     firstName: row[0],
                     lastName: row[1],
@@ -109,8 +138,18 @@ const App: React.FC = () => {
                     reason: row[5],
                     submitted: row[6],
                 }))
-            ))
-            .catch(() => setAbsenceLogs([]));
+            );
+        })
+        .catch(err => {
+            console.error("Error fetching absence logs:", err);
+            setAbsenceLogs([]);
+            setStatus({
+                type: 'error',
+                title: 'API Error',
+                details: 'Could not load absence logs. Please check your connection and try again.'
+            });
+            clearStatus();
+        });
     }, [userInfo.employeeId]);
 
     useEffect(() => {
@@ -187,6 +226,7 @@ const App: React.FC = () => {
 
             await fetch(SCRIPT_URL, {
                 method: 'POST',
+                mode: 'cors', // Added CORS mode
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: 'timelog', ...newLog }),
             });
@@ -221,14 +261,24 @@ const App: React.FC = () => {
 
         const newAbsence: AbsenceLog = { ...userInfo, date, reason, submitted: new Date().toLocaleString() };
 
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: 'absencelog', ...newAbsence }),
-        });
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'cors', // Added CORS mode
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'absencelog', ...newAbsence }),
+            });
 
-        setStatus({ type: 'success', title: 'Absence Logged', details: `Your absence for ${date} has been recorded.` });
-        fetchAbsenceLogs();
+            setStatus({ type: 'success', title: 'Absence Logged', details: `Your absence for ${date} has been recorded.` });
+            fetchAbsenceLogs();
+        } catch (error: any) {
+            const errorMessage = error.message || 'An unknown error occurred';
+            setStatus({ 
+                type: 'error', 
+                title: 'Absence Logging Failed', 
+                details: `Could not submit absence: ${errorMessage}`
+            });
+        }
         clearStatus();
     };
 
