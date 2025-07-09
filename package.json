@@ -1,7 +1,7 @@
 {
   "name": "intern-time-tracker",
   "version": "0.0.0",
-  "type": "module",  // Add this line
+  "type": "module",
   "scripts": {
     "build:css": "tailwindcss -i ./src/index.css -o ./public/output.css",
     "watch:css": "tailwindcss -i ./src/index.css -o ./public/output.css --watch",
