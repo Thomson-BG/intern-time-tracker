@@ -7,6 +7,8 @@ import TabBar from './components/TabBar';
 import TimePanel from './components/TimePanel';
 import AbsencePanel from './components/AbsencePanel';
 import TimesheetPanel from './components/TimesheetPanel';
+import StatusDisplay from './components/StatusDisplay'; // If you use this
+import AdminLogin from './components/AdminLogin'; // If you use this
 
 // === CONFIGURATION ===
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0lWnVu51DoaswLTDF2DP4qpLMgKjaqV5CWbii2CloMOB1I3dbqk-fTn7QTCtOmIX7DA/exec';
