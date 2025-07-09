@@ -4,6 +4,7 @@ import { Tab, TimeLog, AbsenceLog, UserInfo, LocationState } from './types';
 import AdminPanel from './components/AdminPanel';
 import { downloadTimeLogsPDF } from './utils/downloadHelpers';
 import TabBar from './components/TabBar';
+import TimePanel from './components/TimePanel';
 
 // === CONFIGURATION ===
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0lWnVu51DoaswLTDF2DP4qpLMgKjaqV5CWbii2CloMOB1I3dbqk-fTn7QTCtOmIX7DA/exec';
