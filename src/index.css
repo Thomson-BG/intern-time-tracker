@@ -1,18 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* 2) Tailwind directives */
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 3) Custom base styles */
+/* Custom base styles */
 @layer base {
   body {
     font-family: 'Inter', sans-serif;
   }
 }
 
-/* 4) Custom utilities & animations */
+/* Custom utilities & animations */
 @layer utilities {
   @keyframes slide-in {
     0% {

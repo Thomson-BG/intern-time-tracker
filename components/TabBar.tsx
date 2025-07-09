@@ -8,8 +8,8 @@ interface TabBarProps {
 
 const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: Tab.Time,      label: 'Time' },
-    { id: Tab.Absence,   label: 'Absence' },
+    { id: Tab.Time, label: 'Time' },
+    { id: Tab.Absence, label: 'Absence' },
     { id: Tab.Timesheet, label: 'Timesheet' },
   ];
 
@@ -19,13 +19,11 @@ const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
         <button
           key={id}
           onClick={() => setActiveTab(id)}
-          className={[
-            'py-2 px-4 font-semibold rounded-t-lg transition-colors',
+          className={`py-2 px-4 font-medium ${
             activeTab === id
               ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 hover:bg-gray-200',
-            i > 0 ? 'ml-2' : '',
-          ].join(' ')}
+              : 'bg-gray-100 hover:bg-gray-200'
+          } rounded-t-lg ${i > 0 ? 'ml-2' : ''}`}
         >
           {label}
         </button>
