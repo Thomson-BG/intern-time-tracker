@@ -6,28 +6,35 @@ interface TabBarProps {
   setActiveTab: (tab: Tab) => void;
 }
 
-const tabs: { label: string; value: Tab }[] = [
-  { label: 'Time', value: Tab.Time },
-  { label: 'Absence', value: Tab.Absence },
-  { label: 'Timesheet', value: Tab.Timesheet },
-];
+const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
+  // Add console.log to debug
+  const handleTabClick = (tab: Tab) => {
+    console.log("Tab clicked:", tab);
+    setActiveTab(tab);
+  };
 
-const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => (
-  <div className="flex space-x-2 mb-6">
-    {tabs.map((tab) => (
-      <button
-        key={tab.value}
-        className={`px-4 py-2 rounded-md font-semibold ${
-          activeTab === tab.value
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-        }`}
-        onClick={() => setActiveTab(tab.value)}
+  return (
+    <div className="flex space-x-2 mb-4">
+      <button 
+        onClick={() => handleTabClick(Tab.Time)}
+        className={`px-4 py-2 rounded-md ${activeTab === Tab.Time ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
       >
-        {tab.label}
+        Time
       </button>
-    ))}
-  </div>
-);
+      <button 
+        onClick={() => handleTabClick(Tab.Absence)}
+        className={`px-4 py-2 rounded-md ${activeTab === Tab.Absence ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+      >
+        Absence
+      </button>
+      <button 
+        onClick={() => handleTabClick(Tab.Timesheet)}
+        className={`px-4 py-2 rounded-md ${activeTab === Tab.Timesheet ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+      >
+        Timesheet
+      </button>
+    </div>
+  );
+};
 
 export default TabBar;
