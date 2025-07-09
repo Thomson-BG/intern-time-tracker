@@ -1,21 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Tab } from '../types';
 
 interface TabBarProps {
-  onChange?: (tab: Tab) => void;
+  activeTab: Tab;
+  setActiveTab: (tab: Tab) => void;
 }
 
-export const TabBar: React.FC<TabBarProps> = ({ onChange }) => {
-  const [activeTab, setActiveTab] = useState<Tab>(Tab.Time);
-
-  const handleTabClick = (tab: Tab) => {
-    setActiveTab(tab);
-    onChange?.(tab);
-  };
-
-  const tabs: { id: Tab; label: string }[] = [
-    { id: Tab.Time, label: 'Time' },
-    { id: Tab.Absence, label: 'Absence' },
+const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
+  const tabs = [
+    { id: Tab.Time,      label: 'Time' },
+    { id: Tab.Absence,   label: 'Absence' },
     { id: Tab.Timesheet, label: 'Timesheet' },
   ];
 
@@ -24,7 +18,7 @@ export const TabBar: React.FC<TabBarProps> = ({ onChange }) => {
       {tabs.map(({ id, label }, i) => (
         <button
           key={id}
-          onClick={() => handleTabClick(id)}
+          onClick={() => setActiveTab(id)}
           className={[
             'py-2 px-4 font-semibold rounded-t-lg transition-colors',
             activeTab === id
@@ -39,3 +33,5 @@ export const TabBar: React.FC<TabBarProps> = ({ onChange }) => {
     </div>
   );
 };
+
+export default TabBar;
