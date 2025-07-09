@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import Header from '@components/Header';
-import { downloadTimeLogsPDF } from '@utils/downloadHelpers';
-import TabBar from '@components/TabBar';
-import TimePanel from '@components/TimePanel';
-import AbsencePanel from '@components/AbsencePanel';
-import TimesheetPanel from '@components/TimesheetPanel';
-import StatusDisplay from '@components/StatusDisplay';
-import AdminLogin from '@components/AdminLogin';
-import AdminPanel from '@components/AdminPanel';
+import Header from '../components/Header';
+import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
+import TabBar from '../components/TabBar';
+import TimePanel from '../components/TimePanel';
+import AbsencePanel from '../components/AbsencePanel';
+import TimesheetPanel from '../components/TimesheetPanel';
+import StatusDisplay from '../components/StatusDisplay';
+import AdminLogin from '../components/AdminLogin';
+import AdminPanel from '../components/AdminPanel';
 
 enum Tab {
   Time      = 'TIME',
