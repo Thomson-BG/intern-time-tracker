@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface TimePanelProps {
   userInfo: any;
@@ -8,16 +8,44 @@ interface TimePanelProps {
   isLogging: boolean;
 }
 
-const TimePanel: React.FC<TimePanelProps> = ({ 
-  userInfo, 
-  setUserInfo, 
-  onLogAction, 
-  location, 
-  isLogging 
+const TimePanel: React.FC<TimePanelProps> = ({
+  userInfo,
+  setUserInfo,
+  onLogAction,
+  location,
+  isLogging
 }) => {
+  const [lastAction, setLastAction] = useState<string | null>(null);
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setUserInfo({ ...userInfo, [name]: value });
+    setUserInfo({ ...userInfo || {}, [name]: value });
+  };
+  
+  const handleCheckIn = () => {
+    if (!userInfo?.firstName || !userInfo?.lastName || !userInfo?.employeeId) {
+      alert('Please fill in your information first');
+      return;
+    }
+    
+    // Log check-in action
+    setLastAction('Checked in successfully at ' + new Date().toLocaleTimeString());
+    
+    // In a real app, we would call the API here
+    console.log('User checked in:', userInfo);
+  };
+  
+  const handleCheckOut = () => {
+    if (!userInfo?.firstName || !userInfo?.lastName || !userInfo?.employeeId) {
+      alert('Please fill in your information first');
+      return;
+    }
+    
+    // Log check-out action
+    setLastAction('Checked out successfully at ' + new Date().toLocaleTimeString());
+    
+    // In a real app, we would call the API here
+    console.log('User checked out:', userInfo);
   };
 
   return (
@@ -76,20 +104,26 @@ const TimePanel: React.FC<TimePanelProps> = ({
         <h2 className="text-lg font-semibold mb-3">2. Clock In / Out</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
-            onClick={onLogAction}
-            disabled={isLogging || !userInfo}
+            onClick={handleCheckIn}
+            disabled={isLogging}
             className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded flex items-center justify-center"
           >
             <span className="mr-2">✓</span> CHECK IN
           </button>
           <button
-            onClick={onLogAction}
-            disabled={isLogging || !userInfo}
+            onClick={handleCheckOut}
+            disabled={isLogging}
             className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded flex items-center justify-center"
           >
             <span className="mr-2">✗</span> CHECK OUT
           </button>
         </div>
+        
+        {lastAction && (
+          <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
+            {lastAction}
+          </div>
+        )}
       </section>
 
       <section>

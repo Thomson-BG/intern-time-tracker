@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Header from '../components/Header';
-import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
 import TabBar from '../components/TabBar';
 import TimePanel from '../components/TimePanel';
 import AbsencePanel from '../components/AbsencePanel';
@@ -15,18 +14,58 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab]   = useState<Tab>(Tab.Time);
   const [userInfo, setUserInfo]     = useState<any>(null);
   const [status, setStatus]         = useState<any>(null);
-  const [location, setLocation]     = useState<any>(null);
+  const [location, setLocation]     = useState<any>({
+    latitude: null,
+    longitude: null,
+    accuracy: null
+  });
   const [isLogging, setIsLogging]   = useState(false);
   const [timeLogs, setTimeLogs]     = useState<any[]>([]);
   const [absenceLogs, setAbsenceLogs] = useState<any[]>([]);
 
   const handleLogAction = () => {
-    // your log action logic
+    setIsLogging(true);
+    
+    // Simulate geolocation request
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+          setIsLogging(false);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setLocation({
+            latitude: "Unavailable",
+            longitude: "Unavailable",
+            accuracy: "Unknown"
+          });
+          setIsLogging(false);
+        }
+      );
+    } else {
+      setLocation({
+        latitude: "Unsupported",
+        longitude: "Unsupported",
+        accuracy: "Unsupported"
+      });
+      setIsLogging(false);
+    }
   };
-  const handleAddAbsence = () => {
-    // your add absence logic
+  
+  const handleAddAbsence = (absenceData: any) => {
+    // In a real app, we would send this to the backend
+    console.log("Adding absence:", absenceData);
+    // Add the absence to the local state for demo purposes
+    setAbsenceLogs([...absenceLogs, { ...absenceData, timestamp: new Date().toISOString() }]);
   };
+  
   const handleLogin = () => setIsAdmin(true);
+  const handleLogout = () => setIsAdmin(false);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -50,22 +89,16 @@ const App: React.FC = () => {
                 <AbsencePanel userInfo={userInfo} onAddAbsence={handleAddAbsence} />
               )}
               {activeTab === Tab.Timesheet && (
-                <>
-                  <TimesheetPanel logs={timeLogs} userInfo={userInfo} />
-                  <div className="mt-4 text-right">
-                    <button
-                      onClick={() => downloadTimeLogsPDF(timeLogs, userInfo)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                    >
-                      Download Timesheet PDF
-                    </button>
-                  </div>
-                </>
+                <TimesheetPanel logs={timeLogs} userInfo={userInfo} />
               )}
               <AdminLogin onLogin={handleLogin} />
             </>
           ) : (
-            <AdminPanel logs={timeLogs} absences={absenceLogs} onLogout={() => setIsAdmin(false)} />
+            <AdminPanel 
+              logs={timeLogs} 
+              absences={absenceLogs} 
+              onLogout={handleLogout} 
+            />
           )}
         </div>
       </div>
