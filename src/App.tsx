@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// Fix the import paths to point to the correct location
 import Header from '../components/Header';
 import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
 import TabBar from '../components/TabBar';
@@ -8,12 +9,7 @@ import TimesheetPanel from '../components/TimesheetPanel';
 import StatusDisplay from '../components/StatusDisplay';
 import AdminLogin from '../components/AdminLogin';
 import AdminPanel from '../components/AdminPanel';
-
-enum Tab {
-  Time      = 'TIME',
-  Absence   = 'ABSENCE',
-  Timesheet = 'TIMESHEET',
-}
+import { Tab } from '../types/Tab';  // Import the Tab enum from the correct location
 
 const App: React.FC = () => {
   const [isAdmin, setIsAdmin]       = useState(false);

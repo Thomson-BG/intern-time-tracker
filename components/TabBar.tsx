@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tab } from '../types';
+import { Tab } from '../types/Tab';
 
 interface TabBarProps {
   activeTab: Tab;
@@ -22,7 +22,7 @@ const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
           className={[
             'py-2 px-4 font-semibold rounded-t-lg transition-colors',
             activeTab === id
-              ? 'bg-blue-900 text-white'
+              ? 'bg-blue-600 text-white'
               : 'bg-gray-100 hover:bg-gray-200',
             i > 0 ? 'ml-2' : '',
           ].join(' ')}
