@@ -9,9 +9,11 @@ import TimesheetPanel from '../components/TimesheetPanel';
 import StatusDisplay from '../components/StatusDisplay';
 import AdminLogin from '../components/AdminLogin';
 import AdminPanel from '../components/AdminPanel';
+import Notification from '../components/Notification';
 import { Tab } from '../types/Tab';  // Import the Tab enum from the correct location
-import { logTime, TimeLog } from '../utils/timeTrackerApi';
+import { logTime, TimeLog, syncOfflineEntries } from '../utils/timeTrackerApi';
 import { UserInfo, LocationState } from '../types';
+import { OfflineStorage, isOnline, addOnlineListener, addOfflineListener } from '../utils/offlineStorage';
 
 const App: React.FC = () => {
   const [isAdmin, setIsAdmin]       = useState(false);
@@ -38,6 +40,11 @@ const App: React.FC = () => {
   const [timeLogs, setTimeLogs]     = useState<any[]>([]);
   const [absenceLogs, setAbsenceLogs] = useState<any[]>([]);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  } | null>(null);
+  const [onlineStatus, setOnlineStatus] = useState(isOnline());
 
   // Get user's location
   const getCurrentLocation = (): Promise<GeolocationPosition> => {
@@ -78,6 +85,48 @@ const App: React.FC = () => {
       );
     });
   };
+
+  // Handle online/offline status
+  useEffect(() => {
+    const handleOnline = async () => {
+      setOnlineStatus(true);
+      setNotification({
+        message: 'Connection restored! Syncing offline data...',
+        type: 'info'
+      });
+      
+      try {
+        const result = await syncOfflineEntries();
+        if (result.synced > 0) {
+          setNotification({
+            message: `Successfully synced ${result.synced} offline entries!`,
+            type: 'success'
+          });
+        }
+      } catch (error) {
+        setNotification({
+          message: 'Failed to sync some offline entries. They will be retried later.',
+          type: 'warning'
+        });
+      }
+    };
+
+    const handleOffline = () => {
+      setOnlineStatus(false);
+      setNotification({
+        message: 'You are offline. Entries will be saved locally and synced when connection is restored.',
+        type: 'warning'
+      });
+    };
+
+    const unsubscribeOnline = addOnlineListener(handleOnline);
+    const unsubscribeOffline = addOfflineListener(handleOffline);
+
+    return () => {
+      unsubscribeOnline();
+      unsubscribeOffline();
+    };
+  }, []);
 
   // Clear status message after 5 seconds
   useEffect(() => {
@@ -151,11 +200,21 @@ const App: React.FC = () => {
       // Show success message
       const actionText = action === 'IN' ? 'checked in' : 'checked out';
       const timeString = new Date().toLocaleString();
+      const isOffline = !onlineStatus;
+      
       setStatus({
-        message: `Successfully ${actionText} at ${timeString}`,
+        message: `Successfully ${actionText} at ${timeString}${isOffline ? ' (saved offline)' : ''}`,
         type: 'success',
         timestamp: timeString
       });
+
+      // Show notification for offline saves
+      if (isOffline) {
+        setNotification({
+          message: 'Entry saved offline and will sync when connection is restored.',
+          type: 'info'
+        });
+      }
 
       // Add to local logs for timesheet
       setTimeLogs(prev => [...prev, {
@@ -243,6 +302,19 @@ const App: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
       <div className="max-w-3xl mx-auto glass-dark rounded-2xl shadow-2xl overflow-hidden float">
+        {/* Online/Offline Status */}
+        <div className={`w-full px-4 py-2 flex items-center justify-center space-x-2 text-sm ${
+          onlineStatus ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'
+        }`}>
+          <i className={`fas ${onlineStatus ? 'fa-wifi' : 'fa-wifi-slash'}`}></i>
+          <span>{onlineStatus ? 'Online' : 'Offline Mode'}</span>
+          {!onlineStatus && OfflineStorage.getEntryCount() > 0 && (
+            <span className="bg-yellow-500/30 px-2 py-1 rounded-full text-xs">
+              {OfflineStorage.getEntryCount()} pending sync
+            </span>
+          )}
+        </div>
+        
         <Header />
         <div className="p-6">
           {!isAdmin && <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />}
@@ -283,6 +355,15 @@ const App: React.FC = () => {
           <span className="text-white/70 text-xs">© All rights reserved</span>
         </footer>
       </div>
+      
+      {/* Notification */}
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 };

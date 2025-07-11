@@ -35,48 +35,70 @@ const AbsencePanel: React.FC<AbsencePanelProps> = ({ userInfo, onAddAbsence }) =
     setReason('');
   };
 
+  // Check if user info is filled
+  const isUserInfoValid = userInfo?.firstName && userInfo?.lastName && userInfo?.employeeId;
+
   return (
     <div className="space-y-6 slide-in">
-      <h2 className="text-lg font-semibold">Report Absence</h2>
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label className="block text-sm mb-1">Absence Date</label>
-          <input 
-            type="date" 
-            className="w-full border rounded p-2" 
-            value={absenceDate}
-            onChange={(e) => setAbsenceDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="block text-sm mb-1">Absence Type</label>
-          <select 
-            className="w-full border rounded p-2"
-            value={absenceType}
-            onChange={(e) => setAbsenceType(e.target.value)}
+      <div className="card-glass rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+          <i className="fas fa-calendar-times mr-2"></i>
+          Report Absence
+        </h2>
+        
+        {!isUserInfoValid && (
+          <div className="status-error rounded-lg p-4 mb-4">
+            <div className="flex items-center space-x-2">
+              <i className="fas fa-exclamation-triangle"></i>
+              <span className="text-white font-medium">Please fill in your personal information in the Time Tracking tab first.</span>
+            </div>
+          </div>
+        )}
+        
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label className="block text-sm mb-2 text-white/80">Absence Date *</label>
+            <input 
+              type="date" 
+              className="w-full input-glass rounded-lg p-3 transition-all duration-300"
+              value={absenceDate}
+              onChange={(e) => setAbsenceDate(e.target.value)}
+              disabled={!isUserInfoValid}
+            />
+          </div>
+          <div>
+            <label className="block text-sm mb-2 text-white/80">Absence Type *</label>
+            <select 
+              className="w-full input-glass rounded-lg p-3 transition-all duration-300"
+              value={absenceType}
+              onChange={(e) => setAbsenceType(e.target.value)}
+              disabled={!isUserInfoValid}
+            >
+              <option value="">Select type</option>
+              <option value="sick">Sick Leave</option>
+              <option value="vacation">Vacation</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm mb-2 text-white/80">Reason (Optional)</label>
+            <textarea 
+              className="w-full input-glass rounded-lg p-3 h-24 transition-all duration-300 resize-none"
+              placeholder="Enter details about your absence"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              disabled={!isUserInfoValid}
+            />
+          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={!isUserInfoValid || !absenceDate || !absenceType}
+            className="btn-glass hover:glass-light text-white py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all duration-300 flex items-center justify-center space-x-2"
           >
-            <option value="">Select type</option>
-            <option value="sick">Sick Leave</option>
-            <option value="vacation">Vacation</option>
-            <option value="other">Other</option>
-          </select>
+            <i className="fas fa-paper-plane"></i>
+            <span>Submit Absence</span>
+          </button>
         </div>
-        <div>
-          <label className="block text-sm mb-1">Reason (Optional)</label>
-          <textarea 
-            className="w-full border rounded p-2 h-24" 
-            placeholder="Enter details about your absence"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
-        </div>
-        <button
-          onClick={handleSubmit}
-          disabled={!userInfo || !absenceDate || !absenceType}
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded disabled:bg-gray-400"
-        >
-          Submit Absence
-        </button>
       </div>
     </div>
   );
