@@ -173,81 +173,6 @@ const App: React.FC = () => {
       setIsLogging(false);
     }
   };
-
-  // Test function for development - bypasses location
-  const handleTestLogAction = async (action: 'IN' | 'OUT') => {
-    if (isLogging) return;
-    
-    // Validate required fields
-    if (!userInfo.firstName || !userInfo.lastName || !userInfo.employeeId) {
-      setStatus({
-        message: 'Please fill in First Name, Last Name, and Employee ID',
-        type: 'error'
-      });
-      return;
-    }
-
-    setIsLogging(true);
-    
-    try {
-      const timestamp = new Date().toISOString();
-      const deviceId = `${navigator.platform}-${navigator.userAgent.slice(0, 50)}`;
-      
-      const timeEntry: TimeLog = {
-        type: 'timelog',
-        firstName: userInfo.firstName,
-        lastName: userInfo.lastName,
-        employeeId: userInfo.employeeId,
-        deviceName: userInfo.deviceName || 'Test Device',
-        action,
-        timestamp,
-        latitude: 40.7128, // Mock NYC coordinates for testing
-        longitude: -74.0060,
-        accuracy: 10,
-        deviceId,
-        userAgent: navigator.userAgent
-      };
-
-      // Send to Google Sheets
-      await logTime(timeEntry);
-      
-      // Update local state
-      setIsCheckedIn(action === 'IN');
-      
-      // Show success message
-      const actionText = action === 'IN' ? 'checked in' : 'checked out';
-      const timeString = new Date().toLocaleString();
-      setStatus({
-        message: `Successfully ${actionText} at ${timeString} (Test Mode - Mock Location Used)`,
-        type: 'success',
-        timestamp: timeString
-      });
-
-      // Update location display for testing
-      setLocation({
-        latitude: 40.7128,
-        longitude: -74.0060,
-        accuracy: 10,
-        status: 'success',
-        error: undefined
-      });
-
-      // Add to local logs for timesheet
-      setTimeLogs(prev => [...prev, {
-        ...timeEntry,
-        rawTimestamp: Date.now()
-      }]);
-
-    } catch (error) {
-      console.error('Error logging time:', error);
-      setStatus({
-        message: `Failed to ${action === 'IN' ? 'check in' : 'check out'}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        type: 'error'
-      });
-    } finally {
-      setIsLogging(false);
-    }
-  };
   const handleAddAbsence = (absenceData: { date: string; type: string; reason: string }) => {
     // Validate required fields
     if (!userInfo.firstName || !userInfo.lastName || !userInfo.employeeId) {
@@ -329,7 +254,6 @@ const App: React.FC = () => {
                   userInfo={userInfo}
                   setUserInfo={setUserInfo}
                   onLogAction={handleLogAction}
-                  onTestLogAction={handleTestLogAction}
                   location={location}
                   isLogging={isLogging}
                   isCheckedIn={isCheckedIn}
@@ -341,14 +265,6 @@ const App: React.FC = () => {
               {activeTab === Tab.Timesheet && (
                 <>
                   <TimesheetPanel logs={timeLogs} userInfo={userInfo} />
-                  <div className="mt-4 text-right">
-                    <button
-                      onClick={() => downloadTimeLogsPDF(timeLogs, userInfo)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                    >
-                      Download Timesheet PDF
-                    </button>
-                  </div>
                 </>
               )}
               <AdminLogin onLogin={handleLogin} />

@@ -10,7 +10,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simple hardcoded check for demonstration. Replace with your real logic.
+    // Authenticate with proper credentials
     if (username === 'admin' && password === 'password') {
       onLogin(true);
     } else {

@@ -82,6 +82,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
 
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [filterEmployeeId, setFilterEmployeeId] = useState<string>('');
+    
+    // User Management State
+    const [showUserManagement, setShowUserManagement] = useState<boolean>(false);
+    const [newManagerEmail, setNewManagerEmail] = useState<string>('');
+    const [newManagerPassword, setNewManagerPassword] = useState<string>('');
+    const [newManagerName, setNewManagerName] = useState<string>('');
+    const [creatingManager, setCreatingManager] = useState<boolean>(false);
 
     // Fetch ALL time logs (no employeeId filter)
     const fetchTimeLogs = useCallback(async () => {
@@ -166,11 +173,56 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         });
     }, [absenceLogs, filterEmployeeId]);
 
+    // Create Manager Account Function
+    const handleCreateManager = async () => {
+        if (!newManagerEmail || !newManagerPassword || !newManagerName) {
+            alert('Please fill in all fields for the new manager account.');
+            return;
+        }
+        
+        setCreatingManager(true);
+        try {
+            // In a real implementation, this would create a new manager account
+            // For now, we'll just simulate it and show the credentials
+            const managerCredentials = {
+                email: newManagerEmail,
+                password: newManagerPassword,
+                name: newManagerName,
+                role: 'manager',
+                createdAt: new Date().toLocaleString()
+            };
+            
+            // Store in localStorage for demonstration (in real app, this would be sent to backend)
+            const existingManagers = JSON.parse(localStorage.getItem('managers') || '[]');
+            existingManagers.push(managerCredentials);
+            localStorage.setItem('managers', JSON.stringify(existingManagers));
+            
+            alert(`Manager account created successfully!\n\nCredentials:\nEmail: ${newManagerEmail}\nPassword: ${newManagerPassword}\n\nPlease provide these credentials to the manager.`);
+            
+            // Reset form
+            setNewManagerEmail('');
+            setNewManagerPassword('');
+            setNewManagerName('');
+            setShowUserManagement(false);
+            
+        } catch (error) {
+            alert('Failed to create manager account. Please try again.');
+        } finally {
+            setCreatingManager(false);
+        }
+    };
+
     return (
         <div className="slide-in">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Admin Panel</h2>
 
             <div className="flex justify-end mb-6 space-x-2">
+                <button 
+                    onClick={() => setShowUserManagement(!showUserManagement)} 
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2"
+                >
+                    <i className="fas fa-users"></i> User Management
+                </button>
                 <button onClick={() => { fetchTimeLogs(); fetchAbsenceLogs(); }} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2">
                     <i className="fas fa-sync-alt"></i> Refresh Data
                 </button>
@@ -178,6 +230,70 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                     <i className="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
+
+            {/* User Management Section */}
+            {showUserManagement && (
+                <Card className="mb-6">
+                    <CardTitle>User Management - Create Manager Account</CardTitle>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Manager Name</label>
+                                <input
+                                    type="text"
+                                    value={newManagerName}
+                                    onChange={(e) => setNewManagerName(e.target.value)}
+                                    placeholder="Enter manager's full name"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <input
+                                    type="email"
+                                    value={newManagerEmail}
+                                    onChange={(e) => setNewManagerEmail(e.target.value)}
+                                    placeholder="manager@company.com"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input
+                                type="password"
+                                value={newManagerPassword}
+                                onChange={(e) => setNewManagerPassword(e.target.value)}
+                                placeholder="Enter password for manager account"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setShowUserManagement(false)}
+                                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleCreateManager}
+                                disabled={creatingManager || !newManagerEmail || !newManagerPassword || !newManagerName}
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md text-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {creatingManager ? (
+                                    <>
+                                        <i className="fas fa-spinner fa-spin"></i> Creating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="fas fa-user-plus"></i> Create Manager Account
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </Card>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <Card className="col-span-full md:col-span-1">
@@ -234,8 +350,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                                     <p className="text-gray-700"><span className="font-medium">Time:</span> {log.timestamp}</p>
                                     {log.duration && <p className="text-gray-700"><span className="font-medium">Duration:</span> {log.duration}</p>}
                                     {log.latitude && log.longitude && (
-                                        <div className="mt-1 text-xs text-gray-600">
-                                            <p>Location: {Number(log.latitude).toFixed(5)}, {Number(log.longitude).toFixed(5)} (Accuracy: {log.accuracy}m)</p>
+                                        <div className="mt-2">
+                                            <div className="text-xs text-gray-600 mb-2">
+                                                <p><strong>Location:</strong> {Number(log.latitude).toFixed(5)}, {Number(log.longitude).toFixed(5)} (Accuracy: {log.accuracy}m)</p>
+                                            </div>
+                                            {/* Mini Map */}
+                                            <div className="bg-gray-100 border border-gray-300 rounded overflow-hidden">
+                                                <div style={{ height: '120px', width: '100%' }}>
+                                                    <iframe
+                                                        width="100%"
+                                                        height="120"
+                                                        style={{ border: 0 }}
+                                                        loading="lazy"
+                                                        allowFullScreen
+                                                        referrerPolicy="no-referrer-when-downgrade"
+                                                        src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dO_4O0fL3wL1gs&center=${log.latitude},${log.longitude}&zoom=16&maptype=hybrid`}
+                                                        title={`Location Map for ${log.action} - ${log.timestamp}`}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                     <div className="mt-2 text-xs text-gray-500 border-t pt-2">

@@ -5,7 +5,6 @@ interface TimePanelProps {
   userInfo: UserInfo;
   setUserInfo: (info: UserInfo) => void;
   onLogAction: (action: 'IN' | 'OUT') => void;
-  onTestLogAction: (action: 'IN' | 'OUT') => void;
   location: LocationState;
   isLogging: boolean;
   isCheckedIn: boolean;
@@ -15,7 +14,6 @@ const TimePanel: React.FC<TimePanelProps> = ({
   userInfo, 
   setUserInfo, 
   onLogAction,
-  onTestLogAction,
   location, 
   isLogging,
   isCheckedIn
@@ -132,42 +130,6 @@ const TimePanel: React.FC<TimePanelProps> = ({
           </button>
         </div>
         
-        {/* Test buttons for development */}
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">🧪 Test Mode (Mock Location)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              onClick={() => onTestLogAction('IN')}
-              disabled={isLogging || !isFormValid || isCheckedIn}
-              className={`py-2 px-3 rounded text-sm flex items-center justify-center transition-colors ${
-                isCheckedIn 
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                  : isFormValid && !isLogging
-                    ? 'bg-green-100 border border-green-300 text-green-700 hover:bg-green-200'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              <span className="mr-1">🧪</span> TEST CHECK IN
-            </button>
-            <button
-              onClick={() => onTestLogAction('OUT')}
-              disabled={isLogging || !isFormValid || !isCheckedIn}
-              className={`py-2 px-3 rounded text-sm flex items-center justify-center transition-colors ${
-                !isCheckedIn 
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                  : isFormValid && !isLogging
-                    ? 'bg-red-100 border border-red-300 text-red-700 hover:bg-red-200'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              <span className="mr-1">🧪</span> TEST CHECK OUT
-            </button>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Test buttons use mock location data to verify Google Sheets integration without requiring geolocation permissions.
-          </p>
-        </div>
-        
         {/* Status indicator */}
         <div className="mt-4 p-3 rounded-lg bg-gray-50">
           <div className="flex items-center">
@@ -203,11 +165,55 @@ const TimePanel: React.FC<TimePanelProps> = ({
             <span className="mr-2">●</span> Location will be captured on check-in/out.
           </p>
         )}
+        
+        {/* GPS Coordinates Display with Map View */}
         {location.latitude && location.longitude && (
-          <div className="text-sm mt-2 bg-gray-50 p-2 rounded">
-            <div>Latitude: {location.latitude.toFixed(6)}</div>
-            <div>Longitude: {location.longitude.toFixed(6)}</div>
-            <div>Accuracy: {location.accuracy ? `${Math.round(location.accuracy)} meters` : 'Unknown'}</div>
+          <div className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Coordinates Info */}
+              <div className="text-sm bg-gray-50 p-3 rounded">
+                <div><strong>Latitude:</strong> {location.latitude.toFixed(6)}</div>
+                <div><strong>Longitude:</strong> {location.longitude.toFixed(6)}</div>
+                <div><strong>Accuracy:</strong> {location.accuracy ? `${Math.round(location.accuracy)} meters` : 'Unknown'}</div>
+              </div>
+              
+              {/* Map View */}
+              <div className="bg-gray-100 border border-gray-300 rounded relative overflow-hidden">
+                <div className="aspect-square w-full">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    allowFullScreen
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dO_4O0fL3wL1gs&center=${location.latitude},${location.longitude}&zoom=15&maptype=satellite`}
+                    title="Current Location Map"
+                  />
+                  {/* Fallback if Google Maps doesn't work */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-600 text-sm">
+                    <div className="text-center">
+                      <div className="mb-2">📍</div>
+                      <div>GPS Location</div>
+                      <div className="text-xs">
+                        {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* No location available */}
+        {!location.latitude && !location.longitude && (
+          <div className="mt-4 bg-gray-100 border border-gray-300 rounded p-4">
+            <div className="text-center text-gray-600">
+              <div className="mb-2">📍</div>
+              <div className="text-sm">No GPS coordinates available</div>
+              <div className="text-xs text-gray-500 mt-1">Location will be shown after check-in/out</div>
+            </div>
           </div>
         )}
       </section>
