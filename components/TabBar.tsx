@@ -9,7 +9,7 @@ interface TabBarProps {
 const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: Tab.Time,      label: 'Time Tracking', icon: 'fa-clock' },
-    { id: Tab.Absence,   label: 'Absence Request', icon: 'fa-calendar-times' },
+    { id: Tab.Absence,   label: 'Absence', icon: 'fa-calendar-times' },
     { id: Tab.Timesheet, label: 'My Timesheet', icon: 'fa-table' },
   ];
 

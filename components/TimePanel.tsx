@@ -194,19 +194,14 @@ const TimePanel: React.FC<TimePanelProps> = ({
                     height="100%"
                     style={{ border: 0 }}
                     loading="lazy"
-                    allowFullScreen
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dO_4O0fL3wL1gs&center=${location.latitude},${location.longitude}&zoom=15&maptype=satellite`}
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${location.longitude-0.01},${location.latitude-0.01},${location.longitude+0.01},${location.latitude+0.01}&layer=mapnik&marker=${location.latitude},${location.longitude}`}
                     title="Current Location Map"
-                  />
-                  {/* Fallback if Google Maps doesn't work */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-800/80 text-white text-sm">
-                    <div className="text-center">
-                      <div className="mb-2">📍</div>
-                      <div>GPS Location</div>
-                      <div className="text-xs text-white/80">
-                        {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
-                      </div>
+                  ></iframe>
+                  {/* Fallback display */}
+                  <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                    <div className="flex items-center space-x-1">
+                      <div>📍</div>
+                      <div>GPS: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}</div>
                     </div>
                   </div>
                 </div>

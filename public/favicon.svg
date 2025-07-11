@@ -1,6 +1,6 @@
 <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="16" height="16" fill="#1e40af" rx="2"/>
+  <!-- Black background -->
+  <rect width="16" height="16" fill="#000000" rx="2"/>
   
   <!-- Letter T -->
   <path d="M 2 3 L 7 3 L 7 4.5 L 5.5 4.5 L 5.5 10 L 4 10 L 4 4.5 L 2 4.5 Z" fill="white"/>
