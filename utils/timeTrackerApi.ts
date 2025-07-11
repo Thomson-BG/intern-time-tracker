@@ -19,6 +19,18 @@ export interface TimeLog {
   duration?: number;
 }
 
+export interface AbsenceEntry {
+  type: 'absencelog';
+  firstName: string;
+  lastName: string;
+  employeeId: string;
+  deviceName?: string;
+  date: string;
+  absenceType: string;
+  reason: string;
+  submitted: string;
+}
+
 export async function logTime(entry: TimeLog): Promise<string> {
   if (!TIME_TRACKER_API) {
     throw new Error('Google Sheets API URL not configured. Please check VITE_TIME_TRACKER_API in .env file.');
@@ -115,4 +127,8 @@ export async function logTime(entry: TimeLog): Promise<string> {
       }
     }
   }
+}
+
+export async function submitAbsence(entry: AbsenceEntry): Promise<string> {
+  return logTime(entry as any);
 }

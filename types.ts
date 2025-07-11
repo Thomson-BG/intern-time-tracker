@@ -36,3 +36,12 @@ export interface LocationState {
     error?: string;
     status: string;
 }
+
+export interface AdminUser {
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  role: 'admin' | 'manager';
+  assignedBy?: string;
+  assignedAt?: string;
+}

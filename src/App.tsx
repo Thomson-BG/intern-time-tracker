@@ -14,8 +14,10 @@ import { logTime, TimeLog } from '../utils/timeTrackerApi';
 import { UserInfo, LocationState } from '../types';
 
 const App: React.FC = () => {
-  const [isAdmin, setIsAdmin]       = useState(false);
-  const [activeTab, setActiveTab]   = useState<Tab>(Tab.Time);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'manager'>('admin');
+  const [currentUser, setCurrentUser] = useState<{ employeeId: string; firstName: string; lastName: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>(Tab.Time);
   const [userInfo, setUserInfo]     = useState<UserInfo>({
     firstName: '',
     lastName: '',
@@ -248,52 +250,80 @@ const App: React.FC = () => {
       setIsLogging(false);
     }
   };
-  const handleAddAbsence = () => {
-    // your add absence logic
+  const handleAddAbsence = (absenceData: any) => {
+    // Add to local logs for admin panel
+    setAbsenceLogs(prev => [...prev, absenceData]);
   };
-  const handleLogin = () => setIsAdmin(true);
+  const handleLogin = (success: boolean, userRole?: 'admin' | 'manager', currentUser?: { employeeId: string; firstName: string; lastName: string }) => {
+    setIsAdmin(success);
+    if (success && userRole && currentUser) {
+      setCurrentUserRole(userRole);
+      setCurrentUser(currentUser);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAdmin(false);
+    setCurrentUserRole('admin');
+    setCurrentUser(null);
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-        <Header />
-        <div className="p-6">
-          {!isAdmin && <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />}
-          {status && <StatusDisplay message={status.message} type={status.type} timestamp={status.timestamp} />}
-          {!isAdmin ? (
-            <>
-              {activeTab === Tab.Time && (
-                <TimePanel
-                  userInfo={userInfo}
-                  setUserInfo={setUserInfo}
-                  onLogAction={handleLogAction}
-                  onTestLogAction={handleTestLogAction}
-                  location={location}
-                  isLogging={isLogging}
-                  isCheckedIn={isCheckedIn}
-                />
-              )}
-              {activeTab === Tab.Absence && (
-                <AbsencePanel userInfo={userInfo} onAddAbsence={handleAddAbsence} />
-              )}
-              {activeTab === Tab.Timesheet && (
-                <>
-                  <TimesheetPanel logs={timeLogs} userInfo={userInfo} />
-                  <div className="mt-4 text-right">
-                    <button
-                      onClick={() => downloadTimeLogsPDF(timeLogs, userInfo)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                    >
-                      Download Timesheet PDF
-                    </button>
-                  </div>
-                </>
-              )}
-              <AdminLogin onLogin={handleLogin} />
-            </>
-          ) : (
-            <AdminPanel logs={timeLogs} absences={absenceLogs} onLogout={() => setIsAdmin(false)} />
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 hover-lift transition-all duration-300">
+          <Header />
+          <div className="p-8">
+            {!isAdmin && <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />}
+            {status && <StatusDisplay message={status.message} type={status.type} timestamp={status.timestamp} />}
+            {!isAdmin ? (
+              <>
+                {activeTab === Tab.Time && (
+                  <TimePanel
+                    userInfo={userInfo}
+                    setUserInfo={setUserInfo}
+                    onLogAction={handleLogAction}
+                    onTestLogAction={handleTestLogAction}
+                    location={location}
+                    isLogging={isLogging}
+                    isCheckedIn={isCheckedIn}
+                  />
+                )}
+                {activeTab === Tab.Absence && (
+                  <AbsencePanel 
+                    userInfo={userInfo} 
+                    onAddAbsence={handleAddAbsence}
+                    onStatusUpdate={setStatus}
+                  />
+                )}
+                {activeTab === Tab.Timesheet && (
+                  <>
+                    <TimesheetPanel logs={timeLogs} userInfo={userInfo} />
+                    <div className="mt-6 text-right">
+                      <button
+                        onClick={() => downloadTimeLogsPDF(timeLogs, userInfo)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ml-auto hover-lift"
+                      >
+                        <i className="fas fa-download"></i>
+                        Download Timesheet PDF
+                      </button>
+                    </div>
+                  </>
+                )}
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <AdminLogin onLogin={handleLogin} />
+                </div>
+              </>
+            ) : (
+              <AdminPanel 
+                logs={timeLogs} 
+                absences={absenceLogs} 
+                onLogout={handleLogout}
+                currentUserRole={currentUserRole}
+                currentUser={currentUser}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

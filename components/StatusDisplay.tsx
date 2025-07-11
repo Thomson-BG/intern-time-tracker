@@ -9,35 +9,36 @@ interface StatusDisplayProps {
 const getColor = (type: StatusDisplayProps['type']) => {
   switch (type) {
     case 'success':
-      return 'bg-green-100 text-green-700 border-green-400';
+      return 'bg-green-50 text-green-800 border-green-200';
     case 'error':
-      return 'bg-red-100 text-red-700 border-red-400';
+      return 'bg-red-50 text-red-800 border-red-200';
     case 'info':
     default:
-      return 'bg-blue-100 text-blue-700 border-blue-400';
+      return 'bg-blue-50 text-blue-800 border-blue-200';
   }
 };
 
 const getIcon = (type: StatusDisplayProps['type']) => {
   switch (type) {
     case 'success':
-      return '✓';
+      return 'fa-check-circle text-green-500';
     case 'error':
-      return '✗';
+      return 'fa-exclamation-circle text-red-500';
     case 'info':
     default:
-      return 'ℹ';
+      return 'fa-info-circle text-blue-500';
   }
 };
 
 const StatusDisplay: React.FC<StatusDisplayProps> = ({ type, message, timestamp }) => (
-  <div className={`border-l-4 p-4 mb-4 rounded-r-lg ${getColor(type)} animate-fadeIn`}>
+  <div className={`border-l-4 p-4 mb-6 rounded-r-lg shadow-sm ${getColor(type)} animate-slideIn`}>
     <div className="flex items-start">
-      <span className="mr-2 text-lg">{getIcon(type)}</span>
+      <i className={`fas ${getIcon(type)} mr-3 mt-0.5 text-lg`}></i>
       <div className="flex-1">
-        <div className="font-medium">{message}</div>
+        <div className="font-medium leading-relaxed">{message}</div>
         {timestamp && (
-          <div className="text-sm opacity-75 mt-1">
+          <div className="text-sm opacity-75 mt-2 flex items-center">
+            <i className="fas fa-clock mr-1 text-xs"></i>
             {timestamp}
           </div>
         )}
