@@ -10,12 +10,37 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Authenticate with proper credentials
+    
+    // Check hardcoded admin credentials first
     if (username === 'admin' && password === 'password') {
       onLogin(true);
-    } else {
-      onLogin(false);
+      return;
     }
+    
+    // Check dynamically created admin accounts
+    const admins = JSON.parse(localStorage.getItem('admins') || '[]');
+    const adminMatch = admins.find((admin: any) => 
+      admin.loginName === username && admin.password === password
+    );
+    
+    if (adminMatch) {
+      onLogin(true);
+      return;
+    }
+    
+    // Check dynamically created manager accounts (but still give admin access)
+    const managers = JSON.parse(localStorage.getItem('managers') || '[]');
+    const managerMatch = managers.find((manager: any) => 
+      manager.loginName === username && manager.password === password
+    );
+    
+    if (managerMatch) {
+      onLogin(true);
+      return;
+    }
+    
+    // No valid credentials found
+    onLogin(false);
   };
 
   return (

@@ -4,6 +4,7 @@ import {
     downloadTimeLogsCSV, downloadTimeLogsPDF, downloadTimeLogsHTML,
     downloadAbsencesCSV, downloadAbsencesPDF, downloadAbsencesHTML
 } from '../utils/downloadHelpers';
+import { calculateWorkSummary, calculateDailyActivity, exportWorkSummaryCSV, WorkSummary, DailyActivity } from '../utils/analyticsHelpers';
 
 // Use Apps Script URL from environment variable
 const SCRIPT_URL = import.meta.env.VITE_TIME_TRACKER_API as string;
@@ -99,6 +100,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     const [newAdminName, setNewAdminName] = useState<string>('');
     const [newAdminLoginName, setNewAdminLoginName] = useState<string>('');
     const [creatingAdmin, setCreatingAdmin] = useState<boolean>(false);
+    
+    // Analytics State
+    const [activeAnalyticsTab, setActiveAnalyticsTab] = useState<'overview' | 'employees' | 'daily'>('overview');
+    const [workSummaries, setWorkSummaries] = useState<WorkSummary[]>([]);
+    const [dailyActivities, setDailyActivities] = useState<DailyActivity[]>([]);
+    const [mainTab, setMainTab] = useState<'dashboard' | 'analytics' | 'management'>('dashboard');
 
     // Fetch ALL time logs (no employeeId filter)
     const fetchTimeLogs = useCallback(async () => {
@@ -189,6 +196,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             setLoadingAbsenceLogs(false);
         }
     }, []);
+
+    // Calculate analytics when data changes
+    useEffect(() => {
+        if (timeLogs.length > 0) {
+            const summaries = calculateWorkSummary(timeLogs);
+            const dailyStats = calculateDailyActivity(timeLogs);
+            setWorkSummaries(summaries);
+            setDailyActivities(dailyStats);
+        }
+    }, [timeLogs]);
 
     // Fetch data on component mount
     useEffect(() => {
@@ -334,8 +351,48 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 </button>
             </div>
 
-            {/* User Management Section */}
-            {showUserManagement && (
+            {/* Tab Navigation */}
+            <div className="flex space-x-2 mb-6">
+                <button
+                    onClick={() => setMainTab('dashboard')}
+                    className={`py-3 px-6 font-semibold rounded-lg transition-all duration-300 flex items-center space-x-2 ${
+                        mainTab === 'dashboard'
+                            ? 'glass-light text-white border-white/30 shadow-lg transform scale-105'
+                            : 'glass text-white/70 hover:text-white hover:glass-light'
+                    }`}
+                >
+                    <i className="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button
+                    onClick={() => setMainTab('analytics')}
+                    className={`py-3 px-6 font-semibold rounded-lg transition-all duration-300 flex items-center space-x-2 ${
+                        mainTab === 'analytics'
+                            ? 'glass-light text-white border-white/30 shadow-lg transform scale-105'
+                            : 'glass text-white/70 hover:text-white hover:glass-light'
+                    }`}
+                >
+                    <i className="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </button>
+                <button
+                    onClick={() => setMainTab('management')}
+                    className={`py-3 px-6 font-semibold rounded-lg transition-all duration-300 flex items-center space-x-2 ${
+                        mainTab === 'management'
+                            ? 'glass-light text-white border-white/30 shadow-lg transform scale-105'
+                            : 'glass text-white/70 hover:text-white hover:glass-light'
+                    }`}
+                >
+                    <i className="fas fa-cogs"></i>
+                    <span>Management</span>
+                </button>
+            </div>
+
+            {/* Tab Content */}
+            {mainTab === 'dashboard' && (
+                <>
+                    {/* User Management Section */}
+                    {showUserManagement && (
                 <div className="space-y-6">
                     <Card className="mb-6">
                         <CardTitle>User Management - Create Manager Account</CardTitle>
@@ -648,6 +705,225 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                     )}
                 </div>
             </div>
+                </>
+            )}
+
+            {/* Analytics Tab */}
+            {mainTab === 'analytics' && (
+                <div className="space-y-6">
+                    <Card>
+                        <CardTitle>Work Analytics Dashboard</CardTitle>
+                        
+                        {/* Analytics Sub-tabs */}
+                        <div className="flex space-x-2 mb-6">
+                            <button
+                                onClick={() => setActiveAnalyticsTab('overview')}
+                                className={`py-2 px-4 rounded-lg text-sm transition-all duration-300 ${
+                                    activeAnalyticsTab === 'overview'
+                                        ? 'glass-light text-white'
+                                        : 'glass text-white/70 hover:text-white'
+                                }`}
+                            >
+                                Overview
+                            </button>
+                            <button
+                                onClick={() => setActiveAnalyticsTab('employees')}
+                                className={`py-2 px-4 rounded-lg text-sm transition-all duration-300 ${
+                                    activeAnalyticsTab === 'employees'
+                                        ? 'glass-light text-white'
+                                        : 'glass text-white/70 hover:text-white'
+                                }`}
+                            >
+                                Employee Summary
+                            </button>
+                            <button
+                                onClick={() => setActiveAnalyticsTab('daily')}
+                                className={`py-2 px-4 rounded-lg text-sm transition-all duration-300 ${
+                                    activeAnalyticsTab === 'daily'
+                                        ? 'glass-light text-white'
+                                        : 'glass text-white/70 hover:text-white'
+                                }`}
+                            >
+                                Daily Activity
+                            </button>
+                        </div>
+
+                        {/* Analytics Content */}
+                        {activeAnalyticsTab === 'overview' && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="text-center glass-light p-4 rounded-lg">
+                                    <div className="text-2xl font-bold text-blue-400">{workSummaries.length}</div>
+                                    <div className="text-sm text-white">Active Employees</div>
+                                </div>
+                                <div className="text-center glass-light p-4 rounded-lg">
+                                    <div className="text-2xl font-bold text-green-400">
+                                        {workSummaries.reduce((total, emp) => total + emp.totalHours, 0)}
+                                    </div>
+                                    <div className="text-sm text-white">Total Hours Logged</div>
+                                </div>
+                                <div className="text-center glass-light p-4 rounded-lg">
+                                    <div className="text-2xl font-bold text-yellow-400">{dailyActivities.length}</div>
+                                    <div className="text-sm text-white">Days with Activity</div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeAnalyticsTab === 'employees' && (
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="text-lg font-semibold text-white">Employee Work Summary</h4>
+                                    <button
+                                        onClick={() => exportWorkSummaryCSV(workSummaries)}
+                                        className="btn-glass text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                                        disabled={workSummaries.length === 0}
+                                    >
+                                        <i className="fas fa-download"></i>
+                                        Export CSV
+                                    </button>
+                                </div>
+                                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                                    {workSummaries.map((summary, index) => (
+                                        <div key={summary.employeeId} className="glass-light p-4 rounded-lg">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h5 className="font-semibold text-white">{summary.name}</h5>
+                                                    <p className="text-sm text-white/70">ID: {summary.employeeId}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-lg font-bold text-blue-400">{summary.totalHours}h</div>
+                                                    <div className="text-xs text-white/70">{summary.totalDays} days</div>
+                                                </div>
+                                            </div>
+                                            <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <span className="text-white/70">Check-ins:</span>
+                                                    <span className="text-green-400 ml-2">{summary.checkIns}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-white/70">Check-outs:</span>
+                                                    <span className="text-red-400 ml-2">{summary.checkOuts}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeAnalyticsTab === 'daily' && (
+                            <div className="space-y-4">
+                                <h4 className="text-lg font-semibold text-white">Daily Activity Overview</h4>
+                                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                                    {dailyActivities.slice(0, 30).map((activity, index) => (
+                                        <div key={activity.date} className="glass-light p-4 rounded-lg">
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <div className="font-semibold text-white">{activity.date}</div>
+                                                    <div className="text-sm text-white/70">{activity.employees.size} employees active</div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-sm text-white">
+                                                        <span className="text-green-400">{activity.checkIns} in</span>
+                                                        <span className="mx-2">•</span>
+                                                        <span className="text-red-400">{activity.checkOuts} out</span>
+                                                    </div>
+                                                    <div className="text-xs text-white/70">{activity.totalHours}h estimated</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </Card>
+                </div>
+            )}
+
+            {/* Management Tab */}
+            {mainTab === 'management' && (
+                <div className="space-y-6">
+                    <Card>
+                        <CardTitle>System Management</CardTitle>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 className="text-lg font-semibold text-white mb-4">Created Accounts</h4>
+                                <div className="space-y-3">
+                                    <div className="glass-light p-4 rounded-lg">
+                                        <h5 className="font-semibold text-white mb-2">Manager Accounts</h5>
+                                        <div className="space-y-2 max-h-32 overflow-y-auto">
+                                            {JSON.parse(localStorage.getItem('managers') || '[]').map((manager: any, index: number) => (
+                                                <div key={index} className="text-sm">
+                                                    <div className="text-white">{manager.name}</div>
+                                                    <div className="text-white/70">Login: {manager.loginName}</div>
+                                                    <div className="text-xs text-white/50">{manager.createdAt}</div>
+                                                </div>
+                                            ))}
+                                            {JSON.parse(localStorage.getItem('managers') || '[]').length === 0 && (
+                                                <div className="text-white/70 text-sm">No manager accounts created</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="glass-light p-4 rounded-lg">
+                                        <h5 className="font-semibold text-white mb-2">Admin Accounts</h5>
+                                        <div className="space-y-2 max-h-32 overflow-y-auto">
+                                            {JSON.parse(localStorage.getItem('admins') || '[]').map((admin: any, index: number) => (
+                                                <div key={index} className="text-sm">
+                                                    <div className="text-white">{admin.name}</div>
+                                                    <div className="text-white/70">Login: {admin.loginName}</div>
+                                                    <div className="text-xs text-white/50">{admin.createdAt}</div>
+                                                </div>
+                                            ))}
+                                            {JSON.parse(localStorage.getItem('admins') || '[]').length === 0 && (
+                                                <div className="text-white/70 text-sm">No additional admin accounts created</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="text-lg font-semibold text-white mb-4">System Actions</h4>
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={() => {
+                                            if (confirm('This will clear all locally stored manager accounts. Are you sure?')) {
+                                                localStorage.removeItem('managers');
+                                                alert('Manager accounts cleared');
+                                            }
+                                        }}
+                                        className="w-full btn-glass text-white py-3 px-4 rounded-lg flex items-center gap-2 hover:bg-red-500/20"
+                                    >
+                                        <i className="fas fa-trash"></i>
+                                        Clear Manager Accounts
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (confirm('This will clear all locally stored admin accounts. Are you sure?')) {
+                                                localStorage.removeItem('admins');
+                                                alert('Admin accounts cleared');
+                                            }
+                                        }}
+                                        className="w-full btn-glass text-white py-3 px-4 rounded-lg flex items-center gap-2 hover:bg-red-500/20"
+                                    >
+                                        <i className="fas fa-trash"></i>
+                                        Clear Admin Accounts
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            fetchTimeLogs();
+                                            fetchAbsenceLogs();
+                                            alert('Data refreshed from source');
+                                        }}
+                                        className="w-full btn-glass text-white py-3 px-4 rounded-lg flex items-center gap-2"
+                                    >
+                                        <i className="fas fa-sync-alt"></i>
+                                        Force Data Refresh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 };
