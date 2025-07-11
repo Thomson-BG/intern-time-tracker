@@ -81,6 +81,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     const [errorAbsenceLogs, setErrorAbsenceLogs] = useState<string | null>(null);
 
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [selectedEndDate, setSelectedEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [showAllDates, setShowAllDates] = useState<boolean>(true);
     const [filterEmployeeId, setFilterEmployeeId] = useState<string>('');
     
     // User Management State
@@ -88,7 +90,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     const [newManagerEmail, setNewManagerEmail] = useState<string>('');
     const [newManagerPassword, setNewManagerPassword] = useState<string>('');
     const [newManagerName, setNewManagerName] = useState<string>('');
+    const [newManagerLoginName, setNewManagerLoginName] = useState<string>('');
     const [creatingManager, setCreatingManager] = useState<boolean>(false);
+    
+    // Admin Creation State
+    const [newAdminEmail, setNewAdminEmail] = useState<string>('');
+    const [newAdminPassword, setNewAdminPassword] = useState<string>('');
+    const [newAdminName, setNewAdminName] = useState<string>('');
+    const [newAdminLoginName, setNewAdminLoginName] = useState<string>('');
+    const [creatingAdmin, setCreatingAdmin] = useState<boolean>(false);
 
     // Fetch ALL time logs (no employeeId filter)
     const fetchTimeLogs = useCallback(async () => {
@@ -192,20 +202,41 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         return timeLogs.filter(log => {
             // Apply employee ID filter if specified
             const employeeIdMatch = filterEmployeeId ? (log.employeeId || '').includes(filterEmployeeId) : true;
-            return employeeIdMatch;
+            
+            // Apply date range filter if not showing all dates
+            let dateMatch = true;
+            if (!showAllDates && log.timestamp) {
+                const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+                const startDate = selectedDate;
+                const endDate = selectedEndDate;
+                dateMatch = logDate >= startDate && logDate <= endDate;
+            }
+            
+            return employeeIdMatch && dateMatch;
         });
-    }, [timeLogs, filterEmployeeId]);
+    }, [timeLogs, filterEmployeeId, showAllDates, selectedDate, selectedEndDate]);
 
-    // Show all absence logs by default, filter only by employee ID if specified
+    // Show all absence logs by default, filter only by employee ID and date range if specified
     const filteredAbsences = useMemo(() => {
         return absenceLogs.filter(abs => {
-            return filterEmployeeId ? (abs.employeeId || '').includes(filterEmployeeId) : true;
+            const employeeIdMatch = filterEmployeeId ? (abs.employeeId || '').includes(filterEmployeeId) : true;
+            
+            // Apply date range filter if not showing all dates
+            let dateMatch = true;
+            if (!showAllDates && abs.absenceDate) {
+                const absenceDate = abs.absenceDate;
+                const startDate = selectedDate;
+                const endDate = selectedEndDate;
+                dateMatch = absenceDate >= startDate && absenceDate <= endDate;
+            }
+            
+            return employeeIdMatch && dateMatch;
         });
-    }, [absenceLogs, filterEmployeeId]);
+    }, [absenceLogs, filterEmployeeId, showAllDates, selectedDate, selectedEndDate]);
 
     // Create Manager Account Function
     const handleCreateManager = async () => {
-        if (!newManagerEmail || !newManagerPassword || !newManagerName) {
+        if (!newManagerEmail || !newManagerPassword || !newManagerName || !newManagerLoginName) {
             alert('Please fill in all fields for the new manager account.');
             return;
         }
@@ -218,6 +249,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 email: newManagerEmail,
                 password: newManagerPassword,
                 name: newManagerName,
+                loginName: newManagerLoginName,
                 role: 'manager',
                 createdAt: new Date().toLocaleString()
             };
@@ -227,18 +259,59 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             existingManagers.push(managerCredentials);
             localStorage.setItem('managers', JSON.stringify(existingManagers));
             
-            alert(`Manager account created successfully!\n\nCredentials:\nEmail: ${newManagerEmail}\nPassword: ${newManagerPassword}\n\nPlease provide these credentials to the manager.`);
+            alert(`Manager account created successfully!\n\nCredentials:\nLogin Name: ${newManagerLoginName}\nPassword: ${newManagerPassword}\n\nPlease provide these credentials to the manager.`);
             
             // Reset form
             setNewManagerEmail('');
             setNewManagerPassword('');
             setNewManagerName('');
+            setNewManagerLoginName('');
             setShowUserManagement(false);
             
         } catch (error) {
             alert('Failed to create manager account. Please try again.');
         } finally {
             setCreatingManager(false);
+        }
+    };
+
+    // Create Admin Account Function
+    const handleCreateAdmin = async () => {
+        if (!newAdminEmail || !newAdminPassword || !newAdminName || !newAdminLoginName) {
+            alert('Please fill in all fields for the new admin account.');
+            return;
+        }
+        
+        setCreatingAdmin(true);
+        try {
+            // In a real implementation, this would create a new admin account
+            // For now, we'll just simulate it and show the credentials
+            const adminCredentials = {
+                email: newAdminEmail,
+                password: newAdminPassword,
+                name: newAdminName,
+                loginName: newAdminLoginName,
+                role: 'admin',
+                createdAt: new Date().toLocaleString()
+            };
+            
+            // Store in localStorage for demonstration (in real app, this would be sent to backend)
+            const existingAdmins = JSON.parse(localStorage.getItem('admins') || '[]');
+            existingAdmins.push(adminCredentials);
+            localStorage.setItem('admins', JSON.stringify(existingAdmins));
+            
+            alert(`Admin account created successfully!\n\nCredentials:\nLogin Name: ${newAdminLoginName}\nPassword: ${newAdminPassword}\n\nPlease provide these credentials to the admin.`);
+            
+            // Reset form
+            setNewAdminEmail('');
+            setNewAdminPassword('');
+            setNewAdminName('');
+            setNewAdminLoginName('');
+            
+        } catch (error) {
+            alert('Failed to create admin account. Please try again.');
+        } finally {
+            setCreatingAdmin(false);
         }
     };
 
@@ -263,95 +336,176 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
 
             {/* User Management Section */}
             {showUserManagement && (
-                <Card className="mb-6">
-                    <CardTitle>User Management - Create Manager Account</CardTitle>
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Manager Name</label>
-                                <input
-                                    type="text"
-                                    value={newManagerName}
-                                    onChange={(e) => setNewManagerName(e.target.value)}
-                                    placeholder="Enter manager's full name"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                />
+                <div className="space-y-6">
+                    <Card className="mb-6">
+                        <CardTitle>User Management - Create Manager Account</CardTitle>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-1">Manager Name</label>
+                                    <input
+                                        type="text"
+                                        value={newManagerName}
+                                        onChange={(e) => setNewManagerName(e.target.value)}
+                                        placeholder="Enter manager's full name"
+                                        className="w-full input-glass rounded-lg p-3"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={newManagerEmail}
+                                        onChange={(e) => setNewManagerEmail(e.target.value)}
+                                        placeholder="manager@company.com"
+                                        className="w-full input-glass rounded-lg p-3"
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                <input
-                                    type="email"
-                                    value={newManagerEmail}
-                                    onChange={(e) => setNewManagerEmail(e.target.value)}
-                                    placeholder="manager@company.com"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-1">Login Name</label>
+                                    <input
+                                        type="text"
+                                        value={newManagerLoginName}
+                                        onChange={(e) => setNewManagerLoginName(e.target.value)}
+                                        placeholder="Enter login username"
+                                        className="w-full input-glass rounded-lg p-3"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-1">Password</label>
+                                    <input
+                                        type="password"
+                                        value={newManagerPassword}
+                                        onChange={(e) => setNewManagerPassword(e.target.value)}
+                                        placeholder="Enter password for manager account"
+                                        className="w-full input-glass rounded-lg p-3"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    onClick={() => setShowUserManagement(false)}
+                                    className="btn-glass text-white font-bold py-2 px-4 rounded-md text-sm"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleCreateManager}
+                                    disabled={creatingManager || !newManagerEmail || !newManagerPassword || !newManagerName || !newManagerLoginName}
+                                    className="btn-glass hover:glass-light text-white font-bold py-2 px-4 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {creatingManager ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i> Creating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-user-plus"></i> Create Manager Account
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                            <input
-                                type="password"
-                                value={newManagerPassword}
-                                onChange={(e) => setNewManagerPassword(e.target.value)}
-                                placeholder="Enter password for manager account"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            />
+                    </Card>
+
+                    <Card className="mb-6">
+                        <CardTitle>User Management - Create Admin Account</CardTitle>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-1">Admin Name</label>
+                                    <input
+                                        type="text"
+                                        value={newAdminName}
+                                        onChange={(e) => setNewAdminName(e.target.value)}
+                                        placeholder="Enter admin's full name"
+                                        className="w-full input-glass rounded-lg p-3"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={newAdminEmail}
+                                        onChange={(e) => setNewAdminEmail(e.target.value)}
+                                        placeholder="admin@company.com"
+                                        className="w-full input-glass rounded-lg p-3"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-1">Login Name</label>
+                                    <input
+                                        type="text"
+                                        value={newAdminLoginName}
+                                        onChange={(e) => setNewAdminLoginName(e.target.value)}
+                                        placeholder="Enter login username"
+                                        className="w-full input-glass rounded-lg p-3"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-1">Password</label>
+                                    <input
+                                        type="password"
+                                        value={newAdminPassword}
+                                        onChange={(e) => setNewAdminPassword(e.target.value)}
+                                        placeholder="Enter password for admin account"
+                                        className="w-full input-glass rounded-lg p-3"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    onClick={handleCreateAdmin}
+                                    disabled={creatingAdmin || !newAdminEmail || !newAdminPassword || !newAdminName || !newAdminLoginName}
+                                    className="btn-glass hover:glass-light text-white font-bold py-2 px-4 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {creatingAdmin ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i> Creating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-user-shield"></i> Create Admin Account
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex justify-end space-x-3">
-                            <button
-                                onClick={() => setShowUserManagement(false)}
-                                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md text-sm"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleCreateManager}
-                                disabled={creatingManager || !newManagerEmail || !newManagerPassword || !newManagerName}
-                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md text-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                {creatingManager ? (
-                                    <>
-                                        <i className="fas fa-spinner fa-spin"></i> Creating...
-                                    </>
-                                ) : (
-                                    <>
-                                        <i className="fas fa-user-plus"></i> Create Manager Account
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </Card>
+                    </Card>
+                </div>
             )}
 
             {/* Data Summary Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">
+                        <div className="text-2xl font-bold text-blue-400">
                             {loadingTimeLogs ? '...' : timeLogs.length}
                         </div>
-                        <div className="text-sm text-gray-600">Total Time Records</div>
-                        <div className="text-xs text-gray-500 mt-1">From data source</div>
+                        <div className="text-sm text-white">Total Time Records</div>
+                        <div className="text-xs text-white/70 mt-1">From data source</div>
                     </div>
                 </Card>
                 <Card>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-yellow-600">
+                        <div className="text-2xl font-bold text-yellow-400">
                             {loadingAbsenceLogs ? '...' : absenceLogs.length}
                         </div>
-                        <div className="text-sm text-gray-600">Total Absence Records</div>
-                        <div className="text-xs text-gray-500 mt-1">From data source</div>
+                        <div className="text-sm text-white">Total Absence Records</div>
+                        <div className="text-xs text-white/70 mt-1">From data source</div>
                     </div>
                 </Card>
                 <Card>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">
+                        <div className="text-2xl font-bold text-green-400">
                             {loadingTimeLogs || loadingAbsenceLogs ? '...' : filteredTimeLogs.length + filteredAbsences.length}
                         </div>
-                        <div className="text-sm text-gray-600">Filtered Results</div>
-                        <div className="text-xs text-gray-500 mt-1">Matching current filters</div>
+                        <div className="text-sm text-white">Filtered Results</div>
+                        <div className="text-xs text-white/70 mt-1">Matching current filters</div>
                     </div>
                 </Card>
             </div>
@@ -361,24 +515,50 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                     <CardTitle>Data Filters</CardTitle>
                     <div className="space-y-4">
                         <div>
-                            <label htmlFor="filterDate" className="block text-sm font-medium text-gray-700 mb-1">Filter by Date (Time Logs)</label>
-                            <input
-                                type="date"
-                                id="filterDate"
-                                value={selectedDate}
-                                onChange={e => setSelectedDate(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-gray-100 text-gray-900"
-                            />
+                            <div className="flex items-center space-x-2 mb-2">
+                                <input
+                                    type="checkbox"
+                                    id="showAllDates"
+                                    checked={showAllDates}
+                                    onChange={(e) => setShowAllDates(e.target.checked)}
+                                    className="text-blue-500"
+                                />
+                                <label htmlFor="showAllDates" className="text-sm font-medium text-white">Show All Dates</label>
+                            </div>
                         </div>
+                        {!showAllDates && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label htmlFor="filterDate" className="block text-sm font-medium text-white mb-1">Start Date</label>
+                                    <input
+                                        type="date"
+                                        id="filterDate"
+                                        value={selectedDate}
+                                        onChange={e => setSelectedDate(e.target.value)}
+                                        className="w-full input-glass rounded-lg p-3"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="filterEndDate" className="block text-sm font-medium text-white mb-1">End Date</label>
+                                    <input
+                                        type="date"
+                                        id="filterEndDate"
+                                        value={selectedEndDate}
+                                        onChange={e => setSelectedEndDate(e.target.value)}
+                                        className="w-full input-glass rounded-lg p-3"
+                                    />
+                                </div>
+                            </div>
+                        )}
                         <div>
-                            <label htmlFor="filterEmployeeId" className="block text-sm font-medium text-gray-700 mb-1">Filter by Employee ID (All Logs)</label>
+                            <label htmlFor="filterEmployeeId" className="block text-sm font-medium text-white mb-1">Filter by Employee ID (All Logs)</label>
                             <input
                                 type="text"
                                 id="filterEmployeeId"
                                 value={filterEmployeeId}
                                 onChange={e => setFilterEmployeeId(e.target.value)}
                                 placeholder="Enter Employee ID"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-gray-100 text-gray-900"
+                                className="w-full input-glass rounded-lg p-3"
                             />
                         </div>
                     </div>
@@ -409,40 +589,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                     {!loadingTimeLogs && !errorTimeLogs && (
                         <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
                             {filteredTimeLogs.length > 0 ? filteredTimeLogs.map((log, idx) => (
-                                <div key={`${log.employeeId}-${log.rawTimestamp}-${log.action}-${idx}`} className={`p-3 rounded-lg border text-sm ${log.action === 'IN' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                                    <p className={`font-semibold ${log.action === 'IN' ? 'text-green-900' : 'text-red-900'}`}>
+                                <div key={`${log.employeeId}-${log.rawTimestamp}-${log.action}-${idx}`} className={`glass-light p-3 rounded-lg border border-white/20 text-sm`}>
+                                    <p className={`font-semibold ${log.action === 'IN' ? 'text-green-400' : 'text-red-400'}`}>
                                         {log.action === 'IN' ? 'CHECK-IN' : 'CHECK-OUT'} by {log.firstName} {log.lastName} (ID: {log.employeeId})
                                     </p>
-                                    <p className="text-gray-700"><span className="font-medium">Time:</span> {log.timestamp}</p>
-                                    {log.duration && <p className="text-gray-700"><span className="font-medium">Duration:</span> {log.duration}</p>}
+                                    <p className="text-white"><span className="font-medium">Time:</span> {log.timestamp}</p>
+                                    {log.duration && <p className="text-white"><span className="font-medium">Duration:</span> {log.duration}</p>}
                                     {log.latitude && log.longitude && (
                                         <div className="mt-2">
-                                            <div className="text-xs text-gray-600 mb-2">
+                                            <div className="text-xs text-white/80 mb-2">
                                                 <p><strong>Location:</strong> {Number(log.latitude).toFixed(5)}, {Number(log.longitude).toFixed(5)} (Accuracy: {log.accuracy}m)</p>
                                             </div>
-                                            {/* Mini Map */}
-                                            <div className="bg-gray-100 border border-gray-300 rounded overflow-hidden">
+                                            {/* Mini Map with OpenStreetMap */}
+                                            <div className="glass border border-white/20 rounded overflow-hidden">
                                                 <div style={{ height: '120px', width: '100%' }}>
                                                     <iframe
                                                         width="100%"
                                                         height="120"
                                                         style={{ border: 0 }}
                                                         loading="lazy"
-                                                        allowFullScreen
-                                                        referrerPolicy="no-referrer-when-downgrade"
-                                                        src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dO_4O0fL3wL1gs&center=${log.latitude},${log.longitude}&zoom=16&maptype=hybrid`}
+                                                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${log.longitude-0.005},${log.latitude-0.005},${log.longitude+0.005},${log.latitude+0.005}&layer=mapnik&marker=${log.latitude},${log.longitude}`}
                                                         title={`Location Map for ${log.action} - ${log.timestamp}`}
                                                     />
                                                 </div>
                                             </div>
                                         </div>
                                     )}
-                                    <div className="mt-2 text-xs text-gray-500 border-t pt-2">
+                                    <div className="mt-2 text-xs text-white/70 border-t border-white/20 pt-2">
                                         <p>Device Name: {log.deviceName || 'N/A'}</p>
                                         <p className="break-all">Device ID: {log.deviceId}</p>
                                     </div>
                                 </div>
-                            )) : <p className="text-center text-gray-500 py-4">No time logs match the selected date range and filters.</p>}
+                            )) : <p className="text-center text-white/70 py-4">No time logs match the selected date range and filters.</p>}
                         </div>
                     )}
                 </div>
@@ -459,13 +637,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                     {!loadingAbsenceLogs && !errorAbsenceLogs && (
                         <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
                             {filteredAbsences.length > 0 ? filteredAbsences.map((a, index) => (
-                                <div key={`${a.employeeId}-${a.date}-${index}`} className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 text-sm">
-                                    <p className="font-semibold text-yellow-900">{a.firstName} {a.lastName} (ID: {a.employeeId})</p>
-                                    <p className="text-yellow-800"><span className="font-medium">Date:</span> {a.date}</p>
-                                    <p className="text-yellow-800"><span className="font-medium">Reason:</span> {a.reason}</p>
-                                    <p className="text-xs text-gray-600 mt-1">Submitted: {a.submitted}</p>
+                                <div key={`${a.employeeId}-${a.date}-${index}`} className="glass-light p-3 rounded-lg border border-white/20 text-sm">
+                                    <p className="font-semibold text-yellow-400">{a.firstName} {a.lastName} (ID: {a.employeeId})</p>
+                                    <p className="text-white"><span className="font-medium">Date:</span> {a.date}</p>
+                                    <p className="text-white"><span className="font-medium">Reason:</span> {a.reason}</p>
+                                    <p className="text-xs text-white/70 mt-1">Submitted: {a.submitted}</p>
                                 </div>
-                            )) : <p className="text-center text-gray-500 py-4">No absence records match the current filters.</p>}
+                            )) : <p className="text-center text-white/70 py-4">No absence records match the current filters.</p>}
                         </div>
                     )}
                 </div>
