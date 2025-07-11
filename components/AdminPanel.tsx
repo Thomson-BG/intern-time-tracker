@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { TimeLog, AbsenceLog } from '../types';
+import { TimeLog, AbsenceLog, AdminUser } from '../types';
 import {
     downloadTimeLogsCSV, downloadTimeLogsPDF, downloadTimeLogsHTML,
     downloadAbsencesCSV, downloadAbsencesPDF, downloadAbsencesHTML
@@ -10,7 +10,8 @@ const SCRIPT_URL = import.meta.env.VITE_TIME_TRACKER_API || 'https://script.goog
 
 interface AdminPanelProps {
     onLogout: () => void;
-    // currentUserId is not required for the Google Sheets approach, but you may keep it for admin auth UI logic if desired
+    currentUserRole: 'admin' | 'manager';
+    currentUser: { employeeId: string; firstName: string; lastName: string } | null;
 }
 
 // --- Reusable Components for this Panel ---
@@ -72,13 +73,20 @@ const StatusDisplay: React.FC<StatusDisplayProps> = ({ type, title, details }) =
 
 // --- MAIN ADMIN PANEL COMPONENT ---
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, currentUserRole, currentUser }) => {
     const [timeLogs, setTimeLogs] = useState<TimeLog[]>([]);
     const [absenceLogs, setAbsenceLogs] = useState<AbsenceLog[]>([]);
     const [loadingTimeLogs, setLoadingTimeLogs] = useState<boolean>(true);
     const [loadingAbsenceLogs, setLoadingAbsenceLogs] = useState<boolean>(true);
     const [errorTimeLogs, setErrorTimeLogs] = useState<string | null>(null);
     const [errorAbsenceLogs, setErrorAbsenceLogs] = useState<string | null>(null);
+    
+    // Admin users management
+    const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+    const [showAdminManagement, setShowAdminManagement] = useState<boolean>(false);
+    const [newManagerEmployeeId, setNewManagerEmployeeId] = useState<string>('');
+    const [newManagerFirstName, setNewManagerFirstName] = useState<string>('');
+    const [newManagerLastName, setNewManagerLastName] = useState<string>('');
 
     // Date range filtering
     const [startDate, setStartDate] = useState<string>('');
@@ -91,47 +99,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         setLoadingTimeLogs(true);
         setErrorTimeLogs(null);
         try {
-            // Check if we're in development mode
-            const isDevelopment = import.meta.env.DEV;
-            
-            if (isDevelopment) {
-                // In development, simulate data to avoid CORS issues
-                console.log('Development mode: Using mock data for time logs');
-                const mockTimeLogs = [
-                    {
-                        firstName: 'John',
-                        lastName: 'Doe',
-                        employeeId: 'EMP001',
-                        deviceName: 'Test Device',
-                        action: 'IN',
-                        timestamp: new Date().toISOString(),
-                        rawTimestamp: Date.now(),
-                        latitude: 40.7128,
-                        longitude: -74.0060,
-                        accuracy: 10,
-                        deviceId: 'test-device-1',
-                        userAgent: 'Test Browser',
-                        duration: '',
-                    },
-                    {
-                        firstName: 'John',
-                        lastName: 'Doe',
-                        employeeId: 'EMP001',
-                        deviceName: 'Test Device',
-                        action: 'OUT',
-                        timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-                        rawTimestamp: Date.now() - 8 * 60 * 60 * 1000,
-                        latitude: 40.7128,
-                        longitude: -74.0060,
-                        accuracy: 10,
-                        deviceId: 'test-device-1',
-                        userAgent: 'Test Browser',
-                        duration: '8 hours',
-                    }
-                ];
-                setTimeLogs(mockTimeLogs);
-                return;
-            }
+            // Always try to fetch real data first
+            console.log('Attempting to fetch real time logs from Google Sheets...');
             
             const response = await fetch(`${SCRIPT_URL}?type=timelog`, {
                 method: 'GET',
@@ -143,6 +112,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             }
             
             const data = await response.json();
+            console.log('Successfully fetched time logs from Google Sheets:', data);
+            
             setTimeLogs(
                 data.map((row: any[]) => ({
                     firstName: row[0],
@@ -161,9 +132,59 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 }))
             );
         } catch (error: any) {
-            console.error('Error fetching time logs:', error);
-            setErrorTimeLogs(error.message || "Failed to fetch time logs");
-            setTimeLogs([]);
+            console.error('Error fetching time logs from Google Sheets:', error);
+            
+            // Fall back to mock data only if real data fetch fails
+            console.log('Falling back to mock data for time logs');
+            const mockTimeLogs = [
+                {
+                    firstName: 'John',
+                    lastName: 'Doe',
+                    employeeId: 'EMP001',
+                    deviceName: 'Test Device',
+                    action: 'IN',
+                    timestamp: new Date().toISOString(),
+                    rawTimestamp: Date.now(),
+                    latitude: 40.7128,
+                    longitude: -74.0060,
+                    accuracy: 10,
+                    deviceId: 'test-device-1',
+                    userAgent: 'Test Browser',
+                    duration: '',
+                },
+                {
+                    firstName: 'John',
+                    lastName: 'Doe',
+                    employeeId: 'EMP001',
+                    deviceName: 'Test Device',
+                    action: 'OUT',
+                    timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+                    rawTimestamp: Date.now() - 8 * 60 * 60 * 1000,
+                    latitude: 40.7128,
+                    longitude: -74.0060,
+                    accuracy: 10,
+                    deviceId: 'test-device-1',
+                    userAgent: 'Test Browser',
+                    duration: '8 hours',
+                },
+                {
+                    firstName: 'Jane',
+                    lastName: 'Smith',
+                    employeeId: 'EMP002',
+                    deviceName: 'Mobile Device',
+                    action: 'IN',
+                    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                    rawTimestamp: Date.now() - 2 * 60 * 60 * 1000,
+                    latitude: 40.7589,
+                    longitude: -73.9851,
+                    accuracy: 5,
+                    deviceId: 'mobile-device-2',
+                    userAgent: 'Mobile Browser',
+                    duration: '',
+                }
+            ];
+            setTimeLogs(mockTimeLogs);
+            setErrorTimeLogs(`Failed to fetch from Google Sheets: ${error.message || 'Unknown error'}. Using mock data.`);
         } finally {
             setLoadingTimeLogs(false);
         }
@@ -174,26 +195,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         setLoadingAbsenceLogs(true);
         setErrorAbsenceLogs(null);
         try {
-            // Check if we're in development mode
-            const isDevelopment = import.meta.env.DEV;
-            
-            if (isDevelopment) {
-                // In development, simulate data to avoid CORS issues
-                console.log('Development mode: Using mock data for absence logs');
-                const mockAbsenceLogs = [
-                    {
-                        firstName: 'Jane',
-                        lastName: 'Smith',
-                        employeeId: 'EMP002',
-                        deviceName: 'Test Device',
-                        date: new Date().toISOString().split('T')[0],
-                        reason: 'Medical appointment',
-                        submitted: new Date().toISOString(),
-                    }
-                ];
-                setAbsenceLogs(mockAbsenceLogs);
-                return;
-            }
+            // Always try to fetch real data first
+            console.log('Attempting to fetch real absence logs from Google Sheets...');
             
             const response = await fetch(`${SCRIPT_URL}?type=absencelog`, {
                 method: 'GET',
@@ -205,6 +208,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             }
             
             const data = await response.json();
+            console.log('Successfully fetched absence logs from Google Sheets:', data);
+            
             setAbsenceLogs(
                 data.map((row: any[], idx: number) => ({
                     firstName: row[0],
@@ -212,18 +217,122 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                     employeeId: row[2],
                     deviceName: row[3],
                     date: row[4],
-                    reason: row[5],
+                    reason: row[5], // This will be in "Absence Type - Reason" format from Google Sheets
                     submitted: row[6],
                 }))
             );
         } catch (error: any) {
-            console.error('Error fetching absence logs:', error);
-            setErrorAbsenceLogs(error.message || "Failed to fetch absence logs");
-            setAbsenceLogs([]);
+            console.error('Error fetching absence logs from Google Sheets:', error);
+            
+            // Fall back to mock data only if real data fetch fails
+            console.log('Falling back to mock data for absence logs');
+            const mockAbsenceLogs = [
+                {
+                    firstName: 'Jane',
+                    lastName: 'Smith',
+                    employeeId: 'EMP002',
+                    deviceName: 'Test Device',
+                    date: new Date().toISOString().split('T')[0],
+                    reason: 'Sick Leave - Medical appointment',
+                    submitted: new Date().toISOString(),
+                },
+                {
+                    firstName: 'Bob',
+                    lastName: 'Johnson',
+                    employeeId: 'EMP003',
+                    deviceName: 'Work Laptop',
+                    date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    reason: 'Personal Leave - Family emergency',
+                    submitted: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                }
+            ];
+            setAbsenceLogs(mockAbsenceLogs);
+            setErrorAbsenceLogs(`Failed to fetch from Google Sheets: ${error.message || 'Unknown error'}. Using mock data.`);
         } finally {
             setLoadingAbsenceLogs(false);
         }
     }, []);
+
+    // Initialize admin users (in production, this would come from a database)
+    useEffect(() => {
+        // Sample admin users - in production this would be fetched from database
+        const sampleAdminUsers: AdminUser[] = [
+            {
+                employeeId: 'ADMIN001',
+                firstName: 'System',
+                lastName: 'Administrator',
+                role: 'admin',
+                assignedBy: 'System',
+                assignedAt: '2024-01-01'
+            },
+            {
+                employeeId: 'MGR001',
+                firstName: 'Test',
+                lastName: 'Manager',
+                role: 'manager',
+                assignedBy: 'ADMIN001',
+                assignedAt: '2024-01-15'
+            }
+        ];
+        setAdminUsers(sampleAdminUsers);
+    }, []);
+
+    // Handle assigning manager privileges (only admins can do this)
+    const handleAssignManagerPrivileges = () => {
+        if (currentUserRole !== 'admin') {
+            alert('Only administrators can assign manager privileges.');
+            return;
+        }
+
+        if (!newManagerEmployeeId || !newManagerFirstName || !newManagerLastName) {
+            alert('Please fill in all fields.');
+            return;
+        }
+
+        // Check if user already has admin privileges
+        const existingUser = adminUsers.find(user => user.employeeId === newManagerEmployeeId);
+        if (existingUser) {
+            alert('This employee already has admin privileges.');
+            return;
+        }
+
+        const newManager: AdminUser = {
+            employeeId: newManagerEmployeeId,
+            firstName: newManagerFirstName,
+            lastName: newManagerLastName,
+            role: 'manager',
+            assignedBy: currentUser?.employeeId || 'Unknown',
+            assignedAt: new Date().toISOString().split('T')[0]
+        };
+
+        setAdminUsers(prev => [...prev, newManager]);
+        
+        // Clear form
+        setNewManagerEmployeeId('');
+        setNewManagerFirstName('');
+        setNewManagerLastName('');
+        
+        alert(`Manager privileges assigned to ${newManagerFirstName} ${newManagerLastName} (${newManagerEmployeeId})`);
+    };
+
+    // Handle removing manager privileges (only admins can do this)
+    const handleRemoveManagerPrivileges = (employeeId: string) => {
+        if (currentUserRole !== 'admin') {
+            alert('Only administrators can remove manager privileges.');
+            return;
+        }
+
+        const userToRemove = adminUsers.find(user => user.employeeId === employeeId);
+        if (userToRemove?.role === 'admin') {
+            alert('Cannot remove admin privileges.');
+            return;
+        }
+
+        if (confirm(`Are you sure you want to remove manager privileges from ${userToRemove?.firstName} ${userToRemove?.lastName}?`)) {
+            setAdminUsers(prev => prev.filter(user => user.employeeId !== employeeId));
+            alert('Manager privileges removed.');
+        }
+    };
 
     // Fetch data on component mount
     useEffect(() => {
@@ -279,16 +388,115 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
 
     return (
         <div className="slide-in">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Admin Panel</h2>
-
-            <div className="flex justify-end mb-6 space-x-2">
-                <button onClick={() => { fetchTimeLogs(); fetchAbsenceLogs(); }} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2">
-                    <i className="fas fa-sync-alt"></i> Refresh Data
-                </button>
-                <button onClick={onLogout} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2">
-                    <i className="fas fa-sign-out-alt"></i> Logout
-                </button>
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Admin Panel</h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                        Logged in as: <span className="font-medium">{currentUser?.firstName} {currentUser?.lastName}</span> 
+                        <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                            currentUserRole === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                            {currentUserRole === 'admin' ? 'Administrator' : 'Manager'}
+                        </span>
+                    </p>
+                </div>
+                <div className="flex space-x-2">
+                    {currentUserRole === 'admin' && (
+                        <button 
+                            onClick={() => setShowAdminManagement(!showAdminManagement)} 
+                            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2"
+                        >
+                            <i className="fas fa-users-cog"></i> 
+                            {showAdminManagement ? 'Hide' : 'Manage'} Admin Users
+                        </button>
+                    )}
+                    <button onClick={() => { fetchTimeLogs(); fetchAbsenceLogs(); }} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2">
+                        <i className="fas fa-sync-alt"></i> Refresh Data
+                    </button>
+                    <button onClick={onLogout} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2">
+                        <i className="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
             </div>
+
+            {/* Admin Management Section - Only visible to admins */}
+            {currentUserRole === 'admin' && showAdminManagement && (
+                <Card className="col-span-full mb-6">
+                    <CardTitle>Admin User Management</CardTitle>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 className="text-md font-medium text-gray-800 mb-3">Assign Manager Privileges</h4>
+                            <div className="space-y-3">
+                                <input
+                                    type="text"
+                                    placeholder="Employee ID"
+                                    value={newManagerEmployeeId}
+                                    onChange={(e) => setNewManagerEmployeeId(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="First Name"
+                                    value={newManagerFirstName}
+                                    onChange={(e) => setNewManagerFirstName(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Last Name"
+                                    value={newManagerLastName}
+                                    onChange={(e) => setNewManagerLastName(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <button
+                                    onClick={handleAssignManagerPrivileges}
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <i className="fas fa-user-plus"></i>
+                                    Assign Manager Privileges
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 className="text-md font-medium text-gray-800 mb-3">Current Admin Users</h4>
+                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                                {adminUsers.map((user) => (
+                                    <div key={user.employeeId} className={`p-3 rounded-lg border text-sm ${
+                                        user.role === 'admin' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'
+                                    }`}>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-semibold text-gray-900">
+                                                    {user.firstName} {user.lastName} 
+                                                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                                                        user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                                                    }`}>
+                                                        {user.role}
+                                                    </span>
+                                                </p>
+                                                <p className="text-gray-600">ID: {user.employeeId}</p>
+                                                {user.assignedBy && (
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        Assigned by: {user.assignedBy} on {user.assignedAt}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            {user.role === 'manager' && (
+                                                <button
+                                                    onClick={() => handleRemoveManagerPrivileges(user.employeeId)}
+                                                    className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs transition-colors"
+                                                >
+                                                    <i className="fas fa-times"></i>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <Card className="col-span-full">

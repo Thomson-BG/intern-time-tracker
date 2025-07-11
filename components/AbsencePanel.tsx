@@ -36,6 +36,11 @@ const AbsencePanel: React.FC<AbsencePanelProps> = ({ userInfo, onAddAbsence, onS
     setIsSubmitting(true);
 
     try {
+      // Format the reason to include absence type as requested: "Absence Type - Reason"
+      const formattedReason = reason.trim() 
+        ? `${absenceType} - ${reason.trim()}`
+        : absenceType;
+
       const absenceEntry: AbsenceEntry = {
         type: 'absencelog',
         firstName: userInfo.firstName,
@@ -44,7 +49,7 @@ const AbsencePanel: React.FC<AbsencePanelProps> = ({ userInfo, onAddAbsence, onS
         deviceName: userInfo.deviceName || 'Unknown Device',
         date: absenceDate,
         absenceType: absenceType,
-        reason: reason || 'No reason provided',
+        reason: formattedReason, // This will be stored in column F as "Absence Type - Reason"
         submitted: new Date().toISOString()
       };
 
@@ -108,12 +113,14 @@ const AbsencePanel: React.FC<AbsencePanelProps> = ({ userInfo, onAddAbsence, onS
               disabled={isSubmitting}
             >
               <option value="">Select type</option>
-              <option value="sick">Sick Leave</option>
-              <option value="vacation">Vacation</option>
-              <option value="personal">Personal Leave</option>
-              <option value="emergency">Emergency</option>
-              <option value="medical">Medical Appointment</option>
-              <option value="other">Other</option>
+              <option value="Sick Leave">Sick Leave</option>
+              <option value="Vacation">Vacation</option>
+              <option value="Personal Leave">Personal Leave</option>
+              <option value="Emergency">Emergency</option>
+              <option value="Medical Appointment">Medical Appointment</option>
+              <option value="Bereavement">Bereavement</option>
+              <option value="Jury Duty">Jury Duty</option>
+              <option value="Other">Other</option>
             </select>
           </div>
           

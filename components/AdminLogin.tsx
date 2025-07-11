@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface AdminLoginProps {
-  onLogin: (success: boolean) => void;
+  onLogin: (success: boolean, userRole?: 'admin' | 'manager', currentUser?: { employeeId: string; firstName: string; lastName: string }) => void;
 }
 
 const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
@@ -15,11 +15,14 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
     setError('');
     setIsLoading(true);
 
-    // Simulate authentication check
+    // Simulate authentication check with multiple user types
     try {
-      // Simple hardcoded check for demonstration. Replace with your real logic.
+      // Simple hardcoded check for demonstration. In production, this would check against a database.
       if (username === 'admin' && password === 'password') {
-        onLogin(true);
+        onLogin(true, 'admin', { employeeId: 'ADMIN001', firstName: 'System', lastName: 'Administrator' });
+        setError('');
+      } else if (username === 'manager' && password === 'manager123') {
+        onLogin(true, 'manager', { employeeId: 'MGR001', firstName: 'Test', lastName: 'Manager' });
         setError('');
       } else {
         setError('Invalid username or password. Please try again.');
@@ -79,7 +82,8 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
       </div>
       
       <div className="mt-3 text-xs text-gray-500 text-center">
-        <p>Default credentials: admin / password</p>
+        <p>Admin: admin / password</p>
+        <p>Manager: manager / manager123</p>
       </div>
     </form>
   );

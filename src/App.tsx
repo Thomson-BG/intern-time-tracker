@@ -14,8 +14,10 @@ import { logTime, TimeLog } from '../utils/timeTrackerApi';
 import { UserInfo, LocationState } from '../types';
 
 const App: React.FC = () => {
-  const [isAdmin, setIsAdmin]       = useState(false);
-  const [activeTab, setActiveTab]   = useState<Tab>(Tab.Time);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'manager'>('admin');
+  const [currentUser, setCurrentUser] = useState<{ employeeId: string; firstName: string; lastName: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>(Tab.Time);
   const [userInfo, setUserInfo]     = useState<UserInfo>({
     firstName: '',
     lastName: '',
@@ -252,7 +254,19 @@ const App: React.FC = () => {
     // Add to local logs for admin panel
     setAbsenceLogs(prev => [...prev, absenceData]);
   };
-  const handleLogin = () => setIsAdmin(true);
+  const handleLogin = (success: boolean, userRole?: 'admin' | 'manager', currentUser?: { employeeId: string; firstName: string; lastName: string }) => {
+    setIsAdmin(success);
+    if (success && userRole && currentUser) {
+      setCurrentUserRole(userRole);
+      setCurrentUser(currentUser);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAdmin(false);
+    setCurrentUserRole('admin');
+    setCurrentUser(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4">
@@ -301,7 +315,13 @@ const App: React.FC = () => {
                 </div>
               </>
             ) : (
-              <AdminPanel logs={timeLogs} absences={absenceLogs} onLogout={() => setIsAdmin(false)} />
+              <AdminPanel 
+                logs={timeLogs} 
+                absences={absenceLogs} 
+                onLogout={handleLogout}
+                currentUserRole={currentUserRole}
+                currentUser={currentUser}
+              />
             )}
           </div>
         </div>
