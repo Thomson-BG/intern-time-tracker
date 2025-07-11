@@ -143,16 +143,16 @@ const App: React.FC = () => {
       };
 
       // Send to Google Sheets
-      await logTime(timeEntry);
+      const result = await logTime(timeEntry);
       
       // Update local state
       setIsCheckedIn(action === 'IN');
       
-      // Show success message
+      // Show success message with API result
       const actionText = action === 'IN' ? 'checked in' : 'checked out';
       const timeString = new Date().toLocaleString();
       setStatus({
-        message: `Successfully ${actionText} at ${timeString}`,
+        message: `Successfully ${actionText} at ${timeString}. Google Sheets: ${result}`,
         type: 'success',
         timestamp: timeString
       });
@@ -209,16 +209,16 @@ const App: React.FC = () => {
       };
 
       // Send to Google Sheets
-      await logTime(timeEntry);
+      const result = await logTime(timeEntry);
       
       // Update local state
       setIsCheckedIn(action === 'IN');
       
-      // Show success message
+      // Show success message with API result
       const actionText = action === 'IN' ? 'checked in' : 'checked out';
       const timeString = new Date().toLocaleString();
       setStatus({
-        message: `Successfully ${actionText} at ${timeString} (Test Mode - Mock Location Used)`,
+        message: `Successfully ${actionText} at ${timeString} (Test Mode - Mock Location Used). Google Sheets: ${result}`,
         type: 'success',
         timestamp: timeString
       });
