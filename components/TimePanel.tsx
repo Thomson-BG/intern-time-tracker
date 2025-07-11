@@ -5,6 +5,7 @@ interface TimePanelProps {
   userInfo: UserInfo;
   setUserInfo: (info: UserInfo) => void;
   onLogAction: (action: 'IN' | 'OUT') => void;
+  onTestLogAction: (action: 'IN' | 'OUT') => void;
   location: LocationState;
   isLogging: boolean;
   isCheckedIn: boolean;
@@ -13,7 +14,8 @@ interface TimePanelProps {
 const TimePanel: React.FC<TimePanelProps> = ({ 
   userInfo, 
   setUserInfo, 
-  onLogAction, 
+  onLogAction,
+  onTestLogAction,
   location, 
   isLogging,
   isCheckedIn
@@ -128,6 +130,42 @@ const TimePanel: React.FC<TimePanelProps> = ({
               </>
             )}
           </button>
+        </div>
+        
+        {/* Test buttons for development */}
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <h3 className="text-sm font-medium text-gray-600 mb-2">🧪 Test Mode (Mock Location)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => onTestLogAction('IN')}
+              disabled={isLogging || !isFormValid || isCheckedIn}
+              className={`py-2 px-3 rounded text-sm flex items-center justify-center transition-colors ${
+                isCheckedIn 
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                  : isFormValid && !isLogging
+                    ? 'bg-green-100 border border-green-300 text-green-700 hover:bg-green-200'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <span className="mr-1">🧪</span> TEST CHECK IN
+            </button>
+            <button
+              onClick={() => onTestLogAction('OUT')}
+              disabled={isLogging || !isFormValid || !isCheckedIn}
+              className={`py-2 px-3 rounded text-sm flex items-center justify-center transition-colors ${
+                !isCheckedIn 
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                  : isFormValid && !isLogging
+                    ? 'bg-red-100 border border-red-300 text-red-700 hover:bg-red-200'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <span className="mr-1">🧪</span> TEST CHECK OUT
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Test buttons use mock location data to verify Google Sheets integration without requiring geolocation permissions.
+          </p>
         </div>
         
         {/* Status indicator */}
