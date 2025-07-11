@@ -2,8 +2,8 @@ import React from 'react';
 
 interface StatusDisplayProps {
   type: 'success' | 'error' | 'info';
-  title: string;
-  details: string;
+  message: string;
+  timestamp?: string;
 }
 
 const getColor = (type: StatusDisplayProps['type']) => {
@@ -18,10 +18,31 @@ const getColor = (type: StatusDisplayProps['type']) => {
   }
 };
 
-const StatusDisplay: React.FC<StatusDisplayProps> = ({ type, title, details }) => (
-  <div className={`border-l-4 p-4 mb-4 ${getColor(type)}`}>
-    <div className="font-bold">{title}</div>
-    <div>{details}</div>
+const getIcon = (type: StatusDisplayProps['type']) => {
+  switch (type) {
+    case 'success':
+      return '✓';
+    case 'error':
+      return '✗';
+    case 'info':
+    default:
+      return 'ℹ';
+  }
+};
+
+const StatusDisplay: React.FC<StatusDisplayProps> = ({ type, message, timestamp }) => (
+  <div className={`border-l-4 p-4 mb-4 rounded-r-lg ${getColor(type)} animate-fadeIn`}>
+    <div className="flex items-start">
+      <span className="mr-2 text-lg">{getIcon(type)}</span>
+      <div className="flex-1">
+        <div className="font-medium">{message}</div>
+        {timestamp && (
+          <div className="text-sm opacity-75 mt-1">
+            {timestamp}
+          </div>
+        )}
+      </div>
+    </div>
   </div>
 );
 
