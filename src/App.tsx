@@ -248,10 +248,72 @@ const App: React.FC = () => {
       setIsLogging(false);
     }
   };
-  const handleAddAbsence = () => {
-    // your add absence logic
+  const handleAddAbsence = (absenceData: { date: string; type: string; reason: string }) => {
+    // Validate required fields
+    if (!userInfo.firstName || !userInfo.lastName || !userInfo.employeeId) {
+      setStatus({
+        message: 'Please fill in your personal information first (First Name, Last Name, and Employee ID)',
+        type: 'error'
+      });
+      return;
+    }
+
+    if (!absenceData.date || !absenceData.type) {
+      setStatus({
+        message: 'Please fill in the absence date and type',
+        type: 'error'
+      });
+      return;
+    }
+
+    try {
+      // Create absence log entry
+      const absenceEntry = {
+        type: 'absencelog',
+        firstName: userInfo.firstName,
+        lastName: userInfo.lastName,
+        employeeId: userInfo.employeeId,
+        deviceName: userInfo.deviceName || 'Unknown Device',
+        absenceDate: absenceData.date,
+        absenceType: absenceData.type,
+        reason: absenceData.reason || '',
+        timestamp: new Date().toISOString(),
+        deviceId: `${navigator.platform}-${navigator.userAgent.slice(0, 50)}`,
+        userAgent: navigator.userAgent
+      };
+
+      // Add to local absence logs
+      setAbsenceLogs(prev => [...prev, absenceEntry]);
+
+      // Show success message
+      setStatus({
+        message: `Absence request submitted successfully for ${absenceData.date}`,
+        type: 'success',
+        timestamp: new Date().toLocaleString()
+      });
+
+      // TODO: In a real implementation, you might want to send this to the same 
+      // Google Sheets API or a different endpoint for absence tracking
+      // await logTime(absenceEntry);
+
+    } catch (error) {
+      console.error('Error submitting absence:', error);
+      setStatus({
+        message: `Failed to submit absence request: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        type: 'error'
+      });
+    }
   };
-  const handleLogin = () => setIsAdmin(true);
+  const handleLogin = (success: boolean) => {
+    if (success) {
+      setIsAdmin(true);
+    } else {
+      setStatus({
+        message: 'Invalid username or password',
+        type: 'error'
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
