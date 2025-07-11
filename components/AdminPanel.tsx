@@ -5,8 +5,8 @@ import {
     downloadAbsencesCSV, downloadAbsencesPDF, downloadAbsencesHTML
 } from '../utils/downloadHelpers';
 
-// Use your Google Apps Script URL
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0lWnVu51DoaswLTDF2DP4qpLMgKjaqV5CWbii2CloMOB1I3dbqk-fTn7QTCtOmIX7DA/exec';
+// Use Google Apps Script URL from environment variable
+const SCRIPT_URL = import.meta.env.VITE_TIME_TRACKER_API as string;
 
 interface AdminPanelProps {
     onLogout: () => void;
@@ -94,10 +94,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     const fetchTimeLogs = useCallback(async () => {
         setLoadingTimeLogs(true);
         setErrorTimeLogs(null);
+        
+        if (!SCRIPT_URL) {
+            setErrorTimeLogs("Google Apps Script URL is not configured. Please check your environment variables.");
+            setLoadingTimeLogs(false);
+            return;
+        }
+        
         try {
             const response = await fetch(`${SCRIPT_URL}?type=timelog`);
-            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+            }
             const data = await response.json();
+            
+            if (!Array.isArray(data)) {
+                throw new Error("Invalid data format received from Google Sheets");
+            }
+            
             setTimeLogs(
                 data.map((row: any[]) => ({
                     firstName: row[0],
@@ -116,7 +130,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 }))
             );
         } catch (error: any) {
-            setErrorTimeLogs(error.message || "Unknown error");
+            console.error('Error fetching time logs:', error);
+            setErrorTimeLogs(`Failed to fetch time logs: ${error.message || "Unknown error"}`);
             setTimeLogs([]);
         } finally {
             setLoadingTimeLogs(false);
@@ -127,10 +142,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     const fetchAbsenceLogs = useCallback(async () => {
         setLoadingAbsenceLogs(true);
         setErrorAbsenceLogs(null);
+        
+        if (!SCRIPT_URL) {
+            setErrorAbsenceLogs("Google Apps Script URL is not configured. Please check your environment variables.");
+            setLoadingAbsenceLogs(false);
+            return;
+        }
+        
         try {
             const response = await fetch(`${SCRIPT_URL}?type=absencelog`);
-            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+            }
             const data = await response.json();
+            
+            if (!Array.isArray(data)) {
+                throw new Error("Invalid data format received from Google Sheets");
+            }
+            
             setAbsenceLogs(
                 data.map((row: any[], idx: number) => ({
                     firstName: row[0],
@@ -143,7 +172,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 }))
             );
         } catch (error: any) {
-            setErrorAbsenceLogs(error.message || "Unknown error");
+            console.error('Error fetching absence logs:', error);
+            setErrorAbsenceLogs(`Failed to fetch absence logs: ${error.message || "Unknown error"}`);
             setAbsenceLogs([]);
         } finally {
             setLoadingAbsenceLogs(false);
@@ -295,6 +325,37 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 </Card>
             )}
 
+            {/* Data Summary Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card>
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">
+                            {loadingTimeLogs ? '...' : timeLogs.length}
+                        </div>
+                        <div className="text-sm text-gray-600">Total Time Records</div>
+                        <div className="text-xs text-gray-500 mt-1">From Google Sheets</div>
+                    </div>
+                </Card>
+                <Card>
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-yellow-600">
+                            {loadingAbsenceLogs ? '...' : absenceLogs.length}
+                        </div>
+                        <div className="text-sm text-gray-600">Total Absence Records</div>
+                        <div className="text-xs text-gray-500 mt-1">From Google Sheets</div>
+                    </div>
+                </Card>
+                <Card>
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                            {loadingTimeLogs || loadingAbsenceLogs ? '...' : filteredTimeLogs.length + filteredAbsences.length}
+                        </div>
+                        <div className="text-sm text-gray-600">Filtered Results</div>
+                        <div className="text-xs text-gray-500 mt-1">Matching current filters</div>
+                    </div>
+                </Card>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <Card className="col-span-full md:col-span-1">
                     <CardTitle>Data Filters</CardTitle>
@@ -337,8 +398,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Time Records for {selectedDate}</h3>
-                    {loadingTimeLogs && <StatusDisplay type="info" title="Loading" details="Fetching time logs..." />}
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-semibold text-gray-800">Time Records for {selectedDate}</h3>
+                        <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                            {loadingTimeLogs ? 'Loading...' : `${filteredTimeLogs.length} records`}
+                        </span>
+                    </div>
+                    {loadingTimeLogs && <StatusDisplay type="info" title="Loading" details="Fetching time logs from Google Sheets..." />}
                     {errorTimeLogs && <StatusDisplay type="error" title="Error Loading Time Logs" details={errorTimeLogs} />}
                     {!loadingTimeLogs && !errorTimeLogs && (
                         <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
@@ -382,8 +448,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 </div>
 
                 <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Absence Records</h3>
-                    {loadingAbsenceLogs && <StatusDisplay type="info" title="Loading" details="Fetching absence logs..." />}
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-semibold text-gray-800">Absence Records</h3>
+                        <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                            {loadingAbsenceLogs ? 'Loading...' : `${filteredAbsences.length} records`}
+                        </span>
+                    </div>
+                    {loadingAbsenceLogs && <StatusDisplay type="info" title="Loading" details="Fetching absence logs from Google Sheets..." />}
                     {errorAbsenceLogs && <StatusDisplay type="error" title="Error Loading Absence Logs" details={errorAbsenceLogs} />}
                     {!loadingAbsenceLogs && !errorAbsenceLogs && (
                         <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
