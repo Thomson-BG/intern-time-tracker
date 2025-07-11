@@ -5,8 +5,8 @@ import {
     downloadAbsencesCSV, downloadAbsencesPDF, downloadAbsencesHTML
 } from '../utils/downloadHelpers';
 
-// Use your Google Apps Script URL
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0lWnVu51DoaswLTDF2DP4qpLMgKjaqV5CWbii2CloMOB1I3dbqk-fTn7QTCtOmIX7DA/exec';
+// Use your Google Apps Script URL - updated to match the API URL from .env
+const SCRIPT_URL = import.meta.env.VITE_TIME_TRACKER_API || 'https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec';
 
 interface AdminPanelProps {
     onLogout: () => void;
@@ -80,16 +80,68 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     const [errorTimeLogs, setErrorTimeLogs] = useState<string | null>(null);
     const [errorAbsenceLogs, setErrorAbsenceLogs] = useState<string | null>(null);
 
-    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    // Date range filtering
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [filterEmployeeId, setFilterEmployeeId] = useState<string>('');
+    const [useAllDates, setUseAllDates] = useState<boolean>(true);
 
     // Fetch ALL time logs (no employeeId filter)
     const fetchTimeLogs = useCallback(async () => {
         setLoadingTimeLogs(true);
         setErrorTimeLogs(null);
         try {
-            const response = await fetch(`${SCRIPT_URL}?type=timelog`);
-            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+            // Check if we're in development mode
+            const isDevelopment = import.meta.env.DEV;
+            
+            if (isDevelopment) {
+                // In development, simulate data to avoid CORS issues
+                console.log('Development mode: Using mock data for time logs');
+                const mockTimeLogs = [
+                    {
+                        firstName: 'John',
+                        lastName: 'Doe',
+                        employeeId: 'EMP001',
+                        deviceName: 'Test Device',
+                        action: 'IN',
+                        timestamp: new Date().toISOString(),
+                        rawTimestamp: Date.now(),
+                        latitude: 40.7128,
+                        longitude: -74.0060,
+                        accuracy: 10,
+                        deviceId: 'test-device-1',
+                        userAgent: 'Test Browser',
+                        duration: '',
+                    },
+                    {
+                        firstName: 'John',
+                        lastName: 'Doe',
+                        employeeId: 'EMP001',
+                        deviceName: 'Test Device',
+                        action: 'OUT',
+                        timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+                        rawTimestamp: Date.now() - 8 * 60 * 60 * 1000,
+                        latitude: 40.7128,
+                        longitude: -74.0060,
+                        accuracy: 10,
+                        deviceId: 'test-device-1',
+                        userAgent: 'Test Browser',
+                        duration: '8 hours',
+                    }
+                ];
+                setTimeLogs(mockTimeLogs);
+                return;
+            }
+            
+            const response = await fetch(`${SCRIPT_URL}?type=timelog`, {
+                method: 'GET',
+                mode: 'cors'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+            }
+            
             const data = await response.json();
             setTimeLogs(
                 data.map((row: any[]) => ({
@@ -109,7 +161,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 }))
             );
         } catch (error: any) {
-            setErrorTimeLogs(error.message || "Unknown error");
+            console.error('Error fetching time logs:', error);
+            setErrorTimeLogs(error.message || "Failed to fetch time logs");
             setTimeLogs([]);
         } finally {
             setLoadingTimeLogs(false);
@@ -121,8 +174,36 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         setLoadingAbsenceLogs(true);
         setErrorAbsenceLogs(null);
         try {
-            const response = await fetch(`${SCRIPT_URL}?type=absencelog`);
-            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+            // Check if we're in development mode
+            const isDevelopment = import.meta.env.DEV;
+            
+            if (isDevelopment) {
+                // In development, simulate data to avoid CORS issues
+                console.log('Development mode: Using mock data for absence logs');
+                const mockAbsenceLogs = [
+                    {
+                        firstName: 'Jane',
+                        lastName: 'Smith',
+                        employeeId: 'EMP002',
+                        deviceName: 'Test Device',
+                        date: new Date().toISOString().split('T')[0],
+                        reason: 'Medical appointment',
+                        submitted: new Date().toISOString(),
+                    }
+                ];
+                setAbsenceLogs(mockAbsenceLogs);
+                return;
+            }
+            
+            const response = await fetch(`${SCRIPT_URL}?type=absencelog`, {
+                method: 'GET',
+                mode: 'cors'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+            }
+            
             const data = await response.json();
             setAbsenceLogs(
                 data.map((row: any[], idx: number) => ({
@@ -136,7 +217,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 }))
             );
         } catch (error: any) {
-            setErrorAbsenceLogs(error.message || "Unknown error");
+            console.error('Error fetching absence logs:', error);
+            setErrorAbsenceLogs(error.message || "Failed to fetch absence logs");
             setAbsenceLogs([]);
         } finally {
             setLoadingAbsenceLogs(false);
@@ -149,22 +231,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         fetchAbsenceLogs();
     }, [fetchTimeLogs, fetchAbsenceLogs]);
 
-    // Filter time logs by date and optionally by employee ID
+    // Filter time logs by date range and optionally by employee ID
     const filteredTimeLogs = useMemo(() => {
         return timeLogs.filter(log => {
             const logDate = new Date(Number(log.rawTimestamp)).toISOString().split('T')[0];
-            const dateMatch = logDate === selectedDate;
-            const employeeIdMatch = filterEmployeeId ? (log.employeeId || '').includes(filterEmployeeId) : true;
+            
+            // Date range filtering
+            let dateMatch = true;
+            if (!useAllDates) {
+                const logDateObj = new Date(logDate);
+                if (startDate) {
+                    dateMatch = dateMatch && logDateObj >= new Date(startDate);
+                }
+                if (endDate) {
+                    dateMatch = dateMatch && logDateObj <= new Date(endDate);
+                }
+            }
+            
+            // Employee ID filtering
+            const employeeIdMatch = filterEmployeeId ? (log.employeeId || '').toLowerCase().includes(filterEmployeeId.toLowerCase()) : true;
+            
             return dateMatch && employeeIdMatch;
         });
-    }, [timeLogs, selectedDate, filterEmployeeId]);
+    }, [timeLogs, startDate, endDate, filterEmployeeId, useAllDates]);
 
-    // Filter absence logs by employee ID
+    // Filter absence logs by date range and employee ID
     const filteredAbsences = useMemo(() => {
         return absenceLogs.filter(abs => {
-            return filterEmployeeId ? (abs.employeeId || '').includes(filterEmployeeId) : true;
+            // Date range filtering
+            let dateMatch = true;
+            if (!useAllDates && abs.date) {
+                const absenceDate = new Date(abs.date);
+                if (startDate) {
+                    dateMatch = dateMatch && absenceDate >= new Date(startDate);
+                }
+                if (endDate) {
+                    dateMatch = dateMatch && absenceDate <= new Date(endDate);
+                }
+            }
+            
+            // Employee ID filtering
+            const employeeIdMatch = filterEmployeeId ? (abs.employeeId || '').toLowerCase().includes(filterEmployeeId.toLowerCase()) : true;
+            
+            return dateMatch && employeeIdMatch;
         });
-    }, [absenceLogs, filterEmployeeId]);
+    }, [absenceLogs, startDate, endDate, filterEmployeeId, useAllDates]);
 
     return (
         <div className="slide-in">
@@ -180,48 +291,85 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <Card className="col-span-full md:col-span-1">
+                <Card className="col-span-full">
                     <CardTitle>Data Filters</CardTitle>
                     <div className="space-y-4">
-                        <div>
-                            <label htmlFor="filterDate" className="block text-sm font-medium text-gray-700 mb-1">Filter by Date (Time Logs)</label>
+                        <div className="flex items-center space-x-3">
                             <input
-                                type="date"
-                                id="filterDate"
-                                value={selectedDate}
-                                onChange={e => setSelectedDate(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-gray-100 text-gray-900"
+                                type="checkbox"
+                                id="useAllDates"
+                                checked={useAllDates}
+                                onChange={(e) => setUseAllDates(e.target.checked)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             />
+                            <label htmlFor="useAllDates" className="text-sm font-medium text-gray-700">
+                                Show All Dates (Default)
+                            </label>
                         </div>
+                        
+                        {!useAllDates && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-4 border-blue-200 bg-blue-50 p-4 rounded-md">
+                                <div>
+                                    <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                    <input
+                                        type="date"
+                                        id="startDate"
+                                        value={startDate}
+                                        onChange={e => setStartDate(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                                    <input
+                                        type="date"
+                                        id="endDate"
+                                        value={endDate}
+                                        onChange={e => setEndDate(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        
                         <div>
-                            <label htmlFor="filterEmployeeId" className="block text-sm font-medium text-gray-700 mb-1">Filter by Employee ID (All Logs)</label>
+                            <label htmlFor="filterEmployeeId" className="block text-sm font-medium text-gray-700 mb-1">Filter by Employee ID</label>
                             <input
                                 type="text"
                                 id="filterEmployeeId"
                                 value={filterEmployeeId}
                                 onChange={e => setFilterEmployeeId(e.target.value)}
-                                placeholder="Enter Employee ID"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-gray-100 text-gray-900"
+                                placeholder="Enter Employee ID to filter"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                             />
                         </div>
                     </div>
                 </Card>
-                <Card className="col-span-full md:col-span-1">
+                
+                <Card className="col-span-full">
                     <CardTitle>Download Options</CardTitle>
+                    <div className="mb-4 text-sm text-gray-600">
+                        <p>Downloads will include {useAllDates ? 'all records' : `records from ${startDate || 'beginning'} to ${endDate || 'today'}`}
+                        {filterEmployeeId && ` for Employee ID containing "${filterEmployeeId}"`}</p>
+                        <p className="text-xs mt-1">Found: {filteredTimeLogs.length} time records, {filteredAbsences.length} absence records</p>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <DownloadButton onClick={() => downloadTimeLogsCSV(filteredTimeLogs, `time_logs_${selectedDate}`)} text="Time Logs CSV" color="green" icon="fa-file-csv" disabled={!filteredTimeLogs.length} />
-                        <DownloadButton onClick={() => downloadTimeLogsPDF(filteredTimeLogs, `Time Logs for ${selectedDate}`, `time_logs_${selectedDate}`)} text="Time Logs PDF" color="red" icon="fa-file-pdf" disabled={!filteredTimeLogs.length} />
-                        <DownloadButton onClick={() => downloadTimeLogsHTML(filteredTimeLogs, `Time Logs for ${selectedDate}`, `time_logs_${selectedDate}`)} text="Time Logs HTML" color="purple" icon="fa-file-code" disabled={!filteredTimeLogs.length} />
-                        <DownloadButton onClick={() => downloadAbsencesCSV(filteredAbsences, `absence_logs`)} text="Absence CSV" color="green" icon="fa-file-csv" disabled={!filteredAbsences.length} />
-                        <DownloadButton onClick={() => downloadAbsencesPDF(filteredAbsences, `Absence Logs`, `absence_logs`)} text="Absence PDF" color="red" icon="fa-file-pdf" disabled={!filteredAbsences.length} />
-                        <DownloadButton onClick={() => downloadAbsencesHTML(filteredAbsences, `Absence Logs`, `absence_logs`)} text="Absence HTML" color="purple" icon="fa-file-code" disabled={!filteredAbsences.length} />
+                        <DownloadButton onClick={() => downloadTimeLogsCSV(filteredTimeLogs, `time_logs_${useAllDates ? 'all' : `${startDate}_to_${endDate}`}`)} text="Time Logs CSV" color="green" icon="fa-file-csv" disabled={!filteredTimeLogs.length} />
+                        <DownloadButton onClick={() => downloadTimeLogsPDF(filteredTimeLogs, `Time Logs ${useAllDates ? '(All Dates)' : `from ${startDate} to ${endDate}`}`, `time_logs_${useAllDates ? 'all' : `${startDate}_to_${endDate}`}`)} text="Time Logs PDF" color="red" icon="fa-file-pdf" disabled={!filteredTimeLogs.length} />
+                        <DownloadButton onClick={() => downloadTimeLogsHTML(filteredTimeLogs, `Time Logs ${useAllDates ? '(All Dates)' : `from ${startDate} to ${endDate}`}`, `time_logs_${useAllDates ? 'all' : `${startDate}_to_${endDate}`}`)} text="Time Logs HTML" color="purple" icon="fa-file-code" disabled={!filteredTimeLogs.length} />
+                        <DownloadButton onClick={() => downloadAbsencesCSV(filteredAbsences, `absence_logs_${useAllDates ? 'all' : `${startDate}_to_${endDate}`}`)} text="Absence CSV" color="green" icon="fa-file-csv" disabled={!filteredAbsences.length} />
+                        <DownloadButton onClick={() => downloadAbsencesPDF(filteredAbsences, `Absence Logs ${useAllDates ? '(All Dates)' : `from ${startDate} to ${endDate}`}`, `absence_logs_${useAllDates ? 'all' : `${startDate}_to_${endDate}`}`)} text="Absence PDF" color="red" icon="fa-file-pdf" disabled={!filteredAbsences.length} />
+                        <DownloadButton onClick={() => downloadAbsencesHTML(filteredAbsences, `Absence Logs ${useAllDates ? '(All Dates)' : `from ${startDate} to ${endDate}`}`, `absence_logs_${useAllDates ? 'all' : `${startDate}_to_${endDate}`}`)} text="Absence HTML" color="purple" icon="fa-file-code" disabled={!filteredAbsences.length} />
                     </div>
                 </Card>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Time Records for {selectedDate}</h3>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                        Time Records {useAllDates ? '(All Dates)' : `(${startDate || 'Start'} to ${endDate || 'End'})`}
+                        <span className="text-sm font-normal text-gray-600 ml-2">({filteredTimeLogs.length} records)</span>
+                    </h3>
                     {loadingTimeLogs && <StatusDisplay type="info" title="Loading" details="Fetching time logs..." />}
                     {errorTimeLogs && <StatusDisplay type="error" title="Error Loading Time Logs" details={errorTimeLogs} />}
                     {!loadingTimeLogs && !errorTimeLogs && (
@@ -243,13 +391,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                                         <p className="break-all">Device ID: {log.deviceId}</p>
                                     </div>
                                 </div>
-                            )) : <p className="text-center text-gray-500 py-4">No time logs match the selected date range and filters.</p>}
+                            )) : <p className="text-center text-gray-500 py-4">No time logs match the selected filters.</p>}
                         </div>
                     )}
                 </div>
 
                 <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Absence Records</h3>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                        Absence Records {useAllDates ? '(All Dates)' : `(${startDate || 'Start'} to ${endDate || 'End'})`}
+                        <span className="text-sm font-normal text-gray-600 ml-2">({filteredAbsences.length} records)</span>
+                    </h3>
                     {loadingAbsenceLogs && <StatusDisplay type="info" title="Loading" details="Fetching absence logs..." />}
                     {errorAbsenceLogs && <StatusDisplay type="error" title="Error Loading Absence Logs" details={errorAbsenceLogs} />}
                     {!loadingAbsenceLogs && !errorAbsenceLogs && (
