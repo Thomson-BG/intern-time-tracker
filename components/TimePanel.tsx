@@ -1,5 +1,6 @@
 import React from 'react';
 import { UserInfo, LocationState } from '../types';
+import ProductivityReminder from './ProductivityReminder';
 
 interface TimePanelProps {
   userInfo: UserInfo;
@@ -147,6 +148,36 @@ const TimePanel: React.FC<TimePanelProps> = ({
             </span>
           </div>
         </div>
+        
+        {/* Quick Stats Widget */}
+        <div className="mt-4 glass-light rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-white mb-3 flex items-center">
+            <i className="fas fa-chart-line mr-2"></i>
+            Today's Progress
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-400">
+                {isCheckedIn ? '• Active' : '• Inactive'}
+              </div>
+              <div className="text-xs text-white/70">Work Status</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-400">
+                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+              <div className="text-xs text-white/70">Current Time</div>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-white/20">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-white/80">Productivity Tip:</span>
+              <span className="text-xs text-white/60">
+                {isCheckedIn ? 'Great! You\'re actively tracking time' : 'Remember to check in when you start work'}
+              </span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="card-glass rounded-lg p-6">
@@ -221,6 +252,12 @@ const TimePanel: React.FC<TimePanelProps> = ({
           </div>
         )}
       </section>
+      
+      {/* Productivity Reminder */}
+      <ProductivityReminder 
+        isCheckedIn={isCheckedIn}
+        lastCheckInTime={isCheckedIn ? new Date().toISOString() : undefined}
+      />
     </div>
   );
 };

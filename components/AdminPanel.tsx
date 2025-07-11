@@ -5,6 +5,7 @@ import {
     downloadAbsencesCSV, downloadAbsencesPDF, downloadAbsencesHTML
 } from '../utils/downloadHelpers';
 import { calculateWorkSummary, calculateDailyActivity, exportWorkSummaryCSV, WorkSummary, DailyActivity } from '../utils/analyticsHelpers';
+import { calculateProductivityMetrics, analyzeWorkPatterns, exportProductivityCSV, ProductivityMetrics, WorkPattern } from '../utils/productivityHelpers';
 
 // Use Apps Script URL from environment variable
 const SCRIPT_URL = import.meta.env.VITE_TIME_TRACKER_API as string;
@@ -102,9 +103,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     const [creatingAdmin, setCreatingAdmin] = useState<boolean>(false);
     
     // Analytics State
-    const [activeAnalyticsTab, setActiveAnalyticsTab] = useState<'overview' | 'employees' | 'daily'>('overview');
+    const [activeAnalyticsTab, setActiveAnalyticsTab] = useState<'overview' | 'employees' | 'daily' | 'productivity'>('overview');
     const [workSummaries, setWorkSummaries] = useState<WorkSummary[]>([]);
     const [dailyActivities, setDailyActivities] = useState<DailyActivity[]>([]);
+    const [productivityMetrics, setProductivityMetrics] = useState<Map<string, ProductivityMetrics>>(new Map());
+    const [workPatterns, setWorkPatterns] = useState<Map<string, WorkPattern>>(new Map());
     const [mainTab, setMainTab] = useState<'dashboard' | 'analytics' | 'management'>('dashboard');
 
     // Fetch ALL time logs (no employeeId filter)
@@ -202,8 +205,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         if (timeLogs.length > 0) {
             const summaries = calculateWorkSummary(timeLogs);
             const dailyStats = calculateDailyActivity(timeLogs);
+            const prodMetrics = calculateProductivityMetrics(timeLogs);
+            const patterns = analyzeWorkPatterns(timeLogs);
+            
             setWorkSummaries(summaries);
             setDailyActivities(dailyStats);
+            setProductivityMetrics(prodMetrics);
+            setWorkPatterns(patterns);
         }
     }, [timeLogs]);
 
@@ -746,6 +754,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                             >
                                 Daily Activity
                             </button>
+                            <button
+                                onClick={() => setActiveAnalyticsTab('productivity')}
+                                className={`py-2 px-4 rounded-lg text-sm transition-all duration-300 ${
+                                    activeAnalyticsTab === 'productivity'
+                                        ? 'glass-light text-white'
+                                        : 'glass text-white/70 hover:text-white'
+                                }`}
+                            >
+                                Productivity
+                            </button>
                         </div>
 
                         {/* Analytics Content */}
@@ -832,6 +850,96 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeAnalyticsTab === 'productivity' && (
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="text-lg font-semibold text-white">Productivity Analysis</h4>
+                                    <button
+                                        onClick={() => exportProductivityCSV(productivityMetrics, timeLogs)}
+                                        className="btn-glass text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                                        disabled={productivityMetrics.size === 0}
+                                    >
+                                        <i className="fas fa-download"></i>
+                                        Export Productivity Report
+                                    </button>
+                                </div>
+                                <div className="space-y-4">
+                                    {Array.from(productivityMetrics.entries()).map(([employeeId, metrics]) => {
+                                        const pattern = workPatterns.get(employeeId);
+                                        const employee = timeLogs.find(log => log.employeeId === employeeId);
+                                        
+                                        return (
+                                            <div key={employeeId} className="glass-light p-4 rounded-lg">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div>
+                                                        <h5 className="font-semibold text-white">
+                                                            {employee?.firstName} {employee?.lastName}
+                                                        </h5>
+                                                        <p className="text-sm text-white/70">ID: {employeeId}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className={`text-2xl font-bold ${
+                                                            metrics.overallScore >= 80 ? 'text-green-400' :
+                                                            metrics.overallScore >= 60 ? 'text-yellow-400' : 'text-red-400'
+                                                        }`}>
+                                                            {metrics.overallScore}%
+                                                        </div>
+                                                        <div className="text-xs text-white/70">Overall Score</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-3 gap-4 mb-3">
+                                                    <div className="text-center">
+                                                        <div className="text-lg font-semibold text-blue-400">{metrics.efficiency}%</div>
+                                                        <div className="text-xs text-white/70">Efficiency</div>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <div className="text-lg font-semibold text-green-400">{metrics.punctuality}%</div>
+                                                        <div className="text-xs text-white/70">Punctuality</div>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <div className="text-lg font-semibold text-yellow-400">{metrics.consistency}%</div>
+                                                        <div className="text-xs text-white/70">Consistency</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                {pattern && (
+                                                    <div className="border-t border-white/20 pt-3">
+                                                        <h6 className="text-sm font-medium text-white mb-2">Work Pattern</h6>
+                                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                                            <div>
+                                                                <span className="text-white/70">Preferred Hours:</span>
+                                                                <span className="text-white ml-2">
+                                                                    {pattern.preferredStartTime} - {pattern.preferredEndTime}
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-white/70">Avg Duration:</span>
+                                                                <span className="text-white ml-2">{pattern.averageWorkDuration}h</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-white/70">Most Active:</span>
+                                                                <span className="text-green-400 ml-2">{pattern.mostActiveDay}</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-white/70">Least Active:</span>
+                                                                <span className="text-red-400 ml-2">{pattern.leastActiveDay}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                    {productivityMetrics.size === 0 && (
+                                        <div className="text-center text-white/70 py-8">
+                                            No productivity data available. Check in/out data needed for analysis.
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
