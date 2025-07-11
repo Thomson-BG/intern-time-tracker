@@ -1,0 +1,13 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="16" height="16" fill="#1e40af" rx="2"/>
+  
+  <!-- Letter T -->
+  <path d="M 2 3 L 7 3 L 7 4.5 L 5.5 4.5 L 5.5 10 L 4 10 L 4 4.5 L 2 4.5 Z" fill="white"/>
+  
+  <!-- Letter I -->
+  <path d="M 9 3 L 13 3 L 13 4.5 L 12 4.5 L 12 8.5 L 13 8.5 L 13 10 L 9 10 L 9 8.5 L 10 8.5 L 10 4.5 L 9 4.5 Z" fill="white"/>
+  
+  <!-- Accent line -->
+  <line x1="2" y1="12" x2="13" y2="12" stroke="white" stroke-width="1"/>
+</svg>

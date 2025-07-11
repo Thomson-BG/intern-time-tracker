@@ -142,7 +142,7 @@ const App: React.FC = () => {
         userAgent: navigator.userAgent
       };
 
-      // Send to Google Sheets
+      // Send to data API
       await logTime(timeEntry);
       
       // Update local state
@@ -218,7 +218,7 @@ const App: React.FC = () => {
       });
 
       // TODO: In a real implementation, you might want to send this to the same 
-      // Google Sheets API or a different endpoint for absence tracking
+      // data API or a different endpoint for absence tracking
       // await logTime(absenceEntry);
 
     } catch (error) {
@@ -241,8 +241,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="container mx-auto px-4 py-8 min-h-screen">
+      <div className="max-w-3xl mx-auto glass-dark rounded-2xl shadow-2xl overflow-hidden float">
         <Header />
         <div className="p-6">
           {!isAdmin && <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />}
@@ -273,6 +273,15 @@ const App: React.FC = () => {
             <AdminPanel logs={timeLogs} absences={absenceLogs} onLogout={() => setIsAdmin(false)} />
           )}
         </div>
+        
+        {/* Footer */}
+        <footer className="glass-light border-t border-white/20 p-4 flex items-center justify-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <img src="/logo.svg" alt="Thomson Innovations Logo" className="w-8 h-8" />
+            <span className="text-white font-medium text-sm">Thomson Innovations - 2025</span>
+          </div>
+          <span className="text-white/70 text-xs">© All rights reserved</span>
+        </footer>
       </div>
     </div>
   );

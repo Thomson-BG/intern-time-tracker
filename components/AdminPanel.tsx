@@ -5,24 +5,24 @@ import {
     downloadAbsencesCSV, downloadAbsencesPDF, downloadAbsencesHTML
 } from '../utils/downloadHelpers';
 
-// Use Google Apps Script URL from environment variable
+// Use Apps Script URL from environment variable
 const SCRIPT_URL = import.meta.env.VITE_TIME_TRACKER_API as string;
 
 interface AdminPanelProps {
     onLogout: () => void;
-    // currentUserId is not required for the Google Sheets approach, but you may keep it for admin auth UI logic if desired
+    // currentUserId is not required for the data API approach, but you may keep it for admin auth UI logic if desired
 }
 
 // --- Reusable Components for this Panel ---
 
 const Card: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className = '' }) => (
-    <div className={`p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm ${className}`}>
+    <div className={`card-glass rounded-lg p-4 border border-white/20 ${className}`}>
         {children}
     </div>
 );
 
 const CardTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <h3 className="text-lg font-semibold text-gray-800 mb-3">{children}</h3>
+    <h3 className="text-lg font-semibold text-white mb-3">{children}</h3>
 );
 
 interface DownloadButtonProps {
@@ -36,7 +36,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ onClick, text, color, i
     <button
         onClick={onClick}
         disabled={disabled}
-        className={`bg-${color}-600 hover:bg-${color}-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed`}
+        className={`btn-glass hover:glass-light text-white font-bold py-2 px-4 rounded-md text-sm transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
     >
         <i className={`fas ${icon}`}></i>
         <span>{text}</span>
@@ -50,20 +50,20 @@ interface StatusDisplayProps {
 }
 const StatusDisplay: React.FC<StatusDisplayProps> = ({ type, title, details }) => {
     const colorClasses = {
-        success: { bg: 'bg-green-50', border: 'border-green-300', icon: 'fa-check-circle text-green-500' },
-        error: { bg: 'bg-red-50', border: 'border-red-300', icon: 'fa-times-circle text-red-500' },
-        info: { bg: 'bg-blue-50', border: 'border-blue-300', icon: 'fa-info-circle text-blue-500' },
+        success: { bg: 'status-success', icon: 'fa-check-circle text-green-300' },
+        error: { bg: 'status-error', icon: 'fa-times-circle text-red-300' },
+        info: { bg: 'status-info', icon: 'fa-info-circle text-blue-300' },
     };
-    const { bg, border, icon } = colorClasses[type];
+    const { bg, icon } = colorClasses[type];
 
     return (
-        <div className={`p-4 rounded-lg border shadow-sm mb-6 flex items-start space-x-3 slide-in ${bg} ${border}`}>
+        <div className={`p-4 rounded-lg shadow-lg mb-6 flex items-start space-x-3 slide-in ${bg}`}>
             <div className="text-2xl pt-1">
                 <i className={`fas ${icon}`}></i>
             </div>
             <div>
-                <h3 className="font-bold text-lg text-gray-800">{title}</h3>
-                <p className="text-sm text-gray-600">{details}</p>
+                <h3 className="font-bold text-lg text-white">{title}</h3>
+                <p className="text-sm text-white/80">{details}</p>
             </div>
         </div>
     );
@@ -96,7 +96,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         setErrorTimeLogs(null);
         
         if (!SCRIPT_URL) {
-            setErrorTimeLogs("Google Apps Script URL is not configured. Please check your environment variables.");
+            setErrorTimeLogs("Data API URL is not configured. Please check your environment variables.");
             setLoadingTimeLogs(false);
             return;
         }
@@ -109,7 +109,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             const data = await response.json();
             
             if (!Array.isArray(data)) {
-                throw new Error("Invalid data format received from Google Sheets");
+                throw new Error("Invalid data format received from data source");
             }
             
             setTimeLogs(
@@ -144,7 +144,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         setErrorAbsenceLogs(null);
         
         if (!SCRIPT_URL) {
-            setErrorAbsenceLogs("Google Apps Script URL is not configured. Please check your environment variables.");
+            setErrorAbsenceLogs("Data API URL is not configured. Please check your environment variables.");
             setLoadingAbsenceLogs(false);
             return;
         }
@@ -157,7 +157,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             const data = await response.json();
             
             if (!Array.isArray(data)) {
-                throw new Error("Invalid data format received from Google Sheets");
+                throw new Error("Invalid data format received from data source");
             }
             
             setAbsenceLogs(
@@ -186,17 +186,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         fetchAbsenceLogs();
     }, [fetchTimeLogs, fetchAbsenceLogs]);
 
-    // Filter time logs by date and optionally by employee ID
+    // Filter time logs by date (optional) and optionally by employee ID
+    // Show all time logs by default, only filter if specifically requested
     const filteredTimeLogs = useMemo(() => {
         return timeLogs.filter(log => {
-            const logDate = new Date(Number(log.rawTimestamp)).toISOString().split('T')[0];
-            const dateMatch = logDate === selectedDate;
+            // Apply employee ID filter if specified
             const employeeIdMatch = filterEmployeeId ? (log.employeeId || '').includes(filterEmployeeId) : true;
-            return dateMatch && employeeIdMatch;
+            return employeeIdMatch;
         });
-    }, [timeLogs, selectedDate, filterEmployeeId]);
+    }, [timeLogs, filterEmployeeId]);
 
-    // Filter absence logs by employee ID
+    // Show all absence logs by default, filter only by employee ID if specified
     const filteredAbsences = useMemo(() => {
         return absenceLogs.filter(abs => {
             return filterEmployeeId ? (abs.employeeId || '').includes(filterEmployeeId) : true;
@@ -244,19 +244,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
 
     return (
         <div className="slide-in">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Admin Panel</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Admin Panel</h2>
 
             <div className="flex justify-end mb-6 space-x-2">
                 <button 
                     onClick={() => setShowUserManagement(!showUserManagement)} 
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2"
+                    className="btn-glass text-white font-bold py-2 px-4 rounded-md text-sm transition-all duration-300 flex items-center gap-2"
                 >
                     <i className="fas fa-users"></i> User Management
                 </button>
-                <button onClick={() => { fetchTimeLogs(); fetchAbsenceLogs(); }} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2">
+                <button onClick={() => { fetchTimeLogs(); fetchAbsenceLogs(); }} className="btn-glass text-white font-bold py-2 px-4 rounded-md text-sm transition-all duration-300 flex items-center gap-2">
                     <i className="fas fa-sync-alt"></i> Refresh Data
                 </button>
-                <button onClick={onLogout} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2">
+                <button onClick={onLogout} className="btn-glass text-white font-bold py-2 px-4 rounded-md text-sm transition-all duration-300 flex items-center gap-2 hover:bg-red-500/20">
                     <i className="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
@@ -333,7 +333,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                             {loadingTimeLogs ? '...' : timeLogs.length}
                         </div>
                         <div className="text-sm text-gray-600">Total Time Records</div>
-                        <div className="text-xs text-gray-500 mt-1">From Google Sheets</div>
+                        <div className="text-xs text-gray-500 mt-1">From data source</div>
                     </div>
                 </Card>
                 <Card>
@@ -342,7 +342,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                             {loadingAbsenceLogs ? '...' : absenceLogs.length}
                         </div>
                         <div className="text-sm text-gray-600">Total Absence Records</div>
-                        <div className="text-xs text-gray-500 mt-1">From Google Sheets</div>
+                        <div className="text-xs text-gray-500 mt-1">From data source</div>
                     </div>
                 </Card>
                 <Card>
@@ -399,12 +399,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold text-gray-800">Time Records for {selectedDate}</h3>
-                        <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                        <h3 className="text-xl font-semibold text-white">All Time Records</h3>
+                        <span className="text-sm text-white/70 glass-light px-3 py-1 rounded-full">
                             {loadingTimeLogs ? 'Loading...' : `${filteredTimeLogs.length} records`}
                         </span>
                     </div>
-                    {loadingTimeLogs && <StatusDisplay type="info" title="Loading" details="Fetching time logs from Google Sheets..." />}
+                    {loadingTimeLogs && <StatusDisplay type="info" title="Loading" details="Fetching time logs from data source..." />}
                     {errorTimeLogs && <StatusDisplay type="error" title="Error Loading Time Logs" details={errorTimeLogs} />}
                     {!loadingTimeLogs && !errorTimeLogs && (
                         <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
@@ -449,12 +449,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
 
                 <div>
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold text-gray-800">Absence Records</h3>
-                        <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                        <h3 className="text-xl font-semibold text-white">All Absence Records</h3>
+                        <span className="text-sm text-white/70 glass-light px-3 py-1 rounded-full">
                             {loadingAbsenceLogs ? 'Loading...' : `${filteredAbsences.length} records`}
                         </span>
                     </div>
-                    {loadingAbsenceLogs && <StatusDisplay type="info" title="Loading" details="Fetching absence logs from Google Sheets..." />}
+                    {loadingAbsenceLogs && <StatusDisplay type="info" title="Loading" details="Fetching absence logs from data source..." />}
                     {errorAbsenceLogs && <StatusDisplay type="error" title="Error Loading Absence Logs" details={errorAbsenceLogs} />}
                     {!loadingAbsenceLogs && !errorAbsenceLogs && (
                         <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">

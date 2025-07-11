@@ -52,7 +52,9 @@ export async function logTime(entry: TimeLog): Promise<string> {
     return res.text();
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-      throw new Error('Network error: Unable to connect to the time tracking service. This might be due to CORS restrictions or network connectivity issues.');
+      // For now, we'll throw a more helpful error message
+      // In the future, this could implement offline storage or retry logic
+      throw new Error('Network connectivity issue detected. Please check your internet connection and try again. If the problem persists, contact your system administrator.');
     }
     throw error;
   }
