@@ -1,8 +1,8 @@
-# SBRA - School Bus Reporting Application
+# ITS - INTERN TRACKING SYSTEMS APPLICATION
 
 ## Overview
 
-SBRA (School Bus Reporting Application) is a modern, dark-themed time tracking and absence management system designed specifically for high school student interns. Built with React, TypeScript, Tailwind CSS, and MongoDB, it features a sleek glass morphism design with comprehensive functionality for professional time management.
+ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking and absence management system designed specifically for high school student interns. Built with React, TypeScript, Tailwind CSS, and MongoDB, it features a sleek glass morphism design with comprehensive functionality for professional time management.
 
 ## 🚀 Recent Updates - MongoDB Migration
 
