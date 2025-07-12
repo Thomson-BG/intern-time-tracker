@@ -36,8 +36,6 @@ const adminCredentialSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for faster queries
-adminCredentialSchema.index({ username: 1 });
-adminCredentialSchema.index({ employeeId: 1 });
+// Note: indexes are automatically created by unique: true constraints above
 
 module.exports = mongoose.model('AdminCredential', adminCredentialSchema);
