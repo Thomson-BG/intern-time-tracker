@@ -7,8 +7,8 @@ const StudentHelpPanel: React.FC = () => {
 
   const faqs = [
     {
-      question: "What is the School Bus Reporting Application?",
-      answer: "SBRA is your digital timecard for tracking when you start and end your work as an intern. Think of it like clocking in and out at any job - it helps keep accurate records of your work hours."
+      question: "What is the Intern Tracking Systems (ITS) Application?",
+      answer: "ITS is your digital timecard for tracking when you start and end your work as an intern. Think of it like clocking in and out at any job - it helps keep accurate records of your work hours."
     },
     {
       question: "How do I clock in for my shift?",

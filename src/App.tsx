@@ -42,6 +42,8 @@ const App: React.FC = () => {
   const [timeLogs, setTimeLogs]     = useState<any[]>([]);
   const [absenceLogs, setAbsenceLogs] = useState<any[]>([]);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [checkInTime, setCheckInTime] = useState<string | null>(null);
+  const [weeklyHours, setWeeklyHours] = useState<number>(0);
 
   // Load user info from localStorage on initial render
   useEffect(() => {
@@ -49,7 +51,76 @@ const App: React.FC = () => {
     if (storedUserInfo) {
       setUserInfo(JSON.parse(storedUserInfo));
     }
+    
+    // Load check-in status from localStorage
+    const storedCheckInTime = localStorage.getItem('checkInTime');
+    const storedIsCheckedIn = localStorage.getItem('isCheckedIn');
+    if (storedCheckInTime && storedIsCheckedIn === 'true') {
+      setCheckInTime(storedCheckInTime);
+      setIsCheckedIn(true);
+    }
+    
+    // Calculate weekly hours
+    calculateWeeklyHours();
   }, []);
+
+  // Calculate total hours worked this week (Sunday to Saturday)
+  const calculateWeeklyHours = () => {
+    const logs = JSON.parse(localStorage.getItem('timeLogs') || '[]');
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    let totalHours = 0;
+    
+    // Group logs by day and calculate hours for each complete pair
+    const currentWeekLogs = logs.filter((log: any) => {
+      const logDate = new Date(log.timestamp);
+      return logDate >= startOfWeek;
+    });
+    
+    // Calculate hours from completed sessions
+    const sessionPairs: { [key: string]: { in?: any, out?: any } } = {};
+    
+    currentWeekLogs.forEach((log: any) => {
+      const date = new Date(log.timestamp).toDateString();
+      if (!sessionPairs[date]) {
+        sessionPairs[date] = {};
+      }
+      
+      if (log.action === 'IN') {
+        sessionPairs[date].in = log;
+      } else if (log.action === 'OUT') {
+        sessionPairs[date].out = log;
+      }
+    });
+    
+    Object.values(sessionPairs).forEach((session) => {
+      if (session.in && session.out) {
+        const checkInTime = new Date(session.in.timestamp);
+        const checkOutTime = new Date(session.out.timestamp);
+        const hoursWorked = (checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60);
+        totalHours += hoursWorked;
+      }
+    });
+    
+    setWeeklyHours(totalHours);
+  };
+
+  // Calculate daily hours worked
+  const calculateDailyHours = (checkInTimeStr: string): number => {
+    const checkInTime = new Date(checkInTimeStr);
+    const checkOutTime = new Date();
+    return (checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60);
+  };
+
+  // Format hours and minutes
+  const formatHoursMinutes = (totalHours: number): string => {
+    const hours = Math.floor(totalHours);
+    const minutes = Math.round((totalHours - hours) * 60);
+    return `${hours}h ${minutes}m`;
+  };
 
   // Get user's location
   const getCurrentLocation = (): Promise<GeolocationPosition> => {
@@ -157,92 +228,54 @@ const App: React.FC = () => {
       // Send to Google Sheets
       const result = await logTime(timeEntry);
       
-      // Update local state
-      setIsCheckedIn(action === 'IN');
+      // Handle check-in/out logic
+      if (action === 'IN') {
+        setIsCheckedIn(true);
+        setCheckInTime(timestamp);
+        localStorage.setItem('checkInTime', timestamp);
+        localStorage.setItem('isCheckedIn', 'true');
+      } else {
+        // Check out - calculate hours
+        setIsCheckedIn(false);
+        setCheckInTime(null);
+        localStorage.removeItem('checkInTime');
+        localStorage.setItem('isCheckedIn', 'false');
+        
+        // Calculate daily and weekly hours if we have a check-in time
+        if (checkInTime) {
+          const dailyHours = calculateDailyHours(checkInTime);
+          calculateWeeklyHours(); // Recalculate weekly hours
+          
+          // Show hours worked in success message
+          const dailyFormatted = formatHoursMinutes(dailyHours);
+          const weeklyFormatted = formatHoursMinutes(weeklyHours + dailyHours);
+          
+          setStatus({
+            message: `Successfully checked out! Today: ${dailyFormatted}, This week: ${weeklyFormatted}. Google Sheets: ${result}`,
+            type: 'success',
+            timestamp: timeString
+          });
+        } else {
+          setStatus({
+            message: `Successfully ${actionText} at ${timeString}. Google Sheets: ${result}`,
+            type: 'success',
+            timestamp: timeString
+          });
+        }
+      }
       
-      // Show success message with API result
-      const actionText = action === 'IN' ? 'checked in' : 'checked out';
-      const timeString = new Date().toLocaleString();
-      setStatus({
-        message: `Successfully ${actionText} at ${timeString}. Google Sheets: ${result}`,
-        type: 'success',
-        timestamp: timeString
-      });
+      if (action === 'IN') {
+        setStatus({
+          message: `Successfully ${actionText} at ${timeString}. Google Sheets: ${result}`,
+          type: 'success',
+          timestamp: timeString
+        });
+      }
 
-      // Add to local logs for timesheet
-      setTimeLogs(prev => [...prev, {
-        ...timeEntry,
-        rawTimestamp: Date.now()
-      }]);
-
-    } catch (error) {
-      console.error('Error logging time:', error);
-      setStatus({
-        message: `Failed to ${action === 'IN' ? 'check in' : 'check out'}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        type: 'error'
-      });
-    } finally {
-      setIsLogging(false);
-    }
-  };
-
-  // Test function for development - bypasses location
-  const handleTestLogAction = async (action: 'IN' | 'OUT') => {
-    if (isLogging) return;
-    
-    // Validate required fields
-    if (!userInfo.firstName || !userInfo.lastName || !userInfo.employeeId) {
-      setStatus({
-        message: 'Please fill in First Name, Last Name, and Employee ID',
-        type: 'error'
-      });
-      return;
-    }
-
-    setIsLogging(true);
-    
-    try {
-      const timestamp = new Date().toISOString();
-      const deviceId = `${navigator.platform}-${navigator.userAgent.slice(0, 50)}`;
-      
-      const timeEntry: TimeLog = {
-        type: 'timelog',
-        firstName: userInfo.firstName,
-        lastName: userInfo.lastName,
-        employeeId: userInfo.employeeId,
-        deviceName: userInfo.deviceName || 'Test Device',
-        action,
-        timestamp,
-        latitude: 40.7128, // Mock NYC coordinates for testing
-        longitude: -74.0060,
-        accuracy: 10,
-        deviceId,
-        userAgent: navigator.userAgent
-      };
-
-      // Send to Google Sheets
-      const result = await logTime(timeEntry);
-      
-      // Update local state
-      setIsCheckedIn(action === 'IN');
-      
-      // Show success message with API result
-      const actionText = action === 'IN' ? 'checked in' : 'checked out';
-      const timeString = new Date().toLocaleString();
-      setStatus({
-        message: `Successfully ${actionText} at ${timeString} (Test Mode - Mock Location Used). Google Sheets: ${result}`,
-        type: 'success',
-        timestamp: timeString
-      });
-
-      // Update location display for testing
-      setLocation({
-        latitude: 40.7128,
-        longitude: -74.0060,
-        accuracy: 10,
-        status: 'success',
-        error: undefined
-      });
+      // Store logs in localStorage for backup
+      const existingLogs = JSON.parse(localStorage.getItem('timeLogs') || '[]');
+      const updatedLogs = [...existingLogs, timeEntry];
+      localStorage.setItem('timeLogs', JSON.stringify(updatedLogs));
 
       // Add to local logs for timesheet
       setTimeLogs(prev => [...prev, {
@@ -316,7 +349,6 @@ const App: React.FC = () => {
                       userInfo={userInfo}
                       setUserInfo={setUserInfo}
                       onLogAction={handleLogAction}
-                      onTestLogAction={handleTestLogAction}
                       location={location}
                       isLogging={isLogging}
                       isCheckedIn={isCheckedIn}

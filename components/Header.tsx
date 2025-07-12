@@ -12,7 +12,7 @@ const Header: React.FC = () => {
               </svg>
             </div>
             <span className="bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-              SBRA - School Bus Reporting Application
+              Intern Tracking Systems
             </span>
           </h1>
           <p className="text-purple-200/80 text-sm mt-1">Professional time and absence management for high school interns</p>

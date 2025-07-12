@@ -91,10 +91,12 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
           </button>
         </div>
         
-        <div className="mt-3 text-xs text-gray-400 text-center space-y-1">
-          <p className="text-purple-300 font-medium">Demo Credentials:</p>
-          <p><span className="text-white">Admin:</span> admin / password</p>
-          <p><span className="text-white">Manager:</span> manager / manager123</p>
+        <div className="mt-3 text-xs text-gray-400 text-center space-y-1 flex items-center justify-center gap-2">
+          <div className="w-6 h-6 bg-white rounded-sm flex items-center justify-center font-bold text-black text-xs">
+            <span>T</span>
+            <span className="ml-0.5">I</span>
+          </div>
+          <p className="text-purple-300 font-medium">Powered by Thomson Innovations</p>
         </div>
       </form>
     </div>

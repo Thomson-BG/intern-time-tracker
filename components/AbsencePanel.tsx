@@ -117,13 +117,9 @@ const AbsencePanel: React.FC<AbsencePanelProps> = ({ userInfo, onAddAbsence, onS
                 disabled={isSubmitting}
               >
                 <option value="" className="bg-gray-800 text-white">Select type</option>
-                <option value="Sick Leave" className="bg-gray-800 text-white">Sick Leave</option>
-                <option value="Vacation" className="bg-gray-800 text-white">Vacation</option>
-                <option value="Personal Leave" className="bg-gray-800 text-white">Personal Leave</option>
+                <option value="Sick" className="bg-gray-800 text-white">Sick</option>
                 <option value="Emergency" className="bg-gray-800 text-white">Emergency</option>
                 <option value="Medical Appointment" className="bg-gray-800 text-white">Medical Appointment</option>
-                <option value="Bereavement" className="bg-gray-800 text-white">Bereavement</option>
-                <option value="Jury Duty" className="bg-gray-800 text-white">Jury Duty</option>
                 <option value="Other" className="bg-gray-800 text-white">Other</option>
               </select>
             </div>

@@ -1,11 +1,21 @@
 import React from 'react';
 import { UserInfo, LocationState } from '../types';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface TimePanelProps {
   userInfo: UserInfo;
   setUserInfo: (info: UserInfo) => void;
   onLogAction: (action: 'IN' | 'OUT') => void;
-  onTestLogAction: (action: 'IN' | 'OUT') => void;
   location: LocationState;
   isLogging: boolean;
   isCheckedIn: boolean;
@@ -15,7 +25,6 @@ const TimePanel: React.FC<TimePanelProps> = ({
   userInfo, 
   setUserInfo, 
   onLogAction,
-  onTestLogAction,
   location, 
   isLogging,
   isCheckedIn
@@ -168,47 +177,6 @@ const TimePanel: React.FC<TimePanelProps> = ({
             </div>
           </div>
         </div>
-        
-        {/* Test buttons for development */}
-        <div className="mt-6 pt-4 border-t border-white/20">
-          <h3 className="text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
-            <i className="fas fa-flask text-purple-400"></i>
-            Development Test Mode
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <button
-              onClick={() => onTestLogAction('IN')}
-              disabled={isLogging || !isFormValid || isCheckedIn}
-              className={`py-3 px-4 rounded-md text-sm flex items-center justify-center transition-colors ${
-                isCheckedIn 
-                  ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600' 
-                  : isFormValid && !isLogging
-                    ? 'bg-green-500/20 border border-green-500/30 text-green-300 hover:bg-green-500/30'
-                    : 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600'
-              }`}
-            >
-              <i className="fas fa-flask mr-2"></i>
-              TEST CHECK IN
-            </button>
-            <button
-              onClick={() => onTestLogAction('OUT')}
-              disabled={isLogging || !isFormValid || !isCheckedIn}
-              className={`py-3 px-4 rounded-md text-sm flex items-center justify-center transition-colors ${
-                !isCheckedIn 
-                  ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600' 
-                  : isFormValid && !isLogging
-                    ? 'bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30'
-                    : 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600'
-              }`}
-            >
-              <i className="fas fa-flask mr-2"></i>
-              TEST CHECK OUT
-            </button>
-          </div>
-          <p className="text-xs text-gray-400 mt-2">
-            Test buttons use mock location data to verify Google Sheets integration without requiring geolocation permissions.
-          </p>
-        </div>
       </section>
 
       <section className="glass-card p-6 rounded-lg border border-white/10">
@@ -247,20 +215,44 @@ const TimePanel: React.FC<TimePanelProps> = ({
           )}
           
           {location.latitude && location.longitude && (
-            <div className="glass p-4 rounded-md border border-white/20">
-              <h4 className="text-sm font-medium text-gray-300 mb-2">Current Location</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-400">
-                <div>
-                  <span className="font-medium text-white">Latitude:</span> {location.latitude.toFixed(6)}
-                </div>
-                <div>
-                  <span className="font-medium text-white">Longitude:</span> {location.longitude.toFixed(6)}
-                </div>
-                <div>
-                  <span className="font-medium text-white">Accuracy:</span> {location.accuracy ? `${Math.round(location.accuracy)}m` : 'Unknown'}
+            <>
+              <div className="glass p-4 rounded-md border border-white/20">
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Current Location</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-400">
+                  <div>
+                    <span className="font-medium text-white">Latitude:</span> {location.latitude.toFixed(6)}
+                  </div>
+                  <div>
+                    <span className="font-medium text-white">Longitude:</span> {location.longitude.toFixed(6)}
+                  </div>
+                  <div>
+                    <span className="font-medium text-white">Accuracy:</span> {location.accuracy ? `${Math.round(location.accuracy)}m` : 'Unknown'}
+                  </div>
                 </div>
               </div>
-            </div>
+              
+              <div className="glass p-4 rounded-md border border-white/20">
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Location Map</h4>
+                <div className="h-64 rounded-md overflow-hidden">
+                  <MapContainer
+                    center={[location.latitude, location.longitude]}
+                    zoom={15}
+                    style={{ height: '100%', width: '100%' }}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    <Marker position={[location.latitude, location.longitude]}>
+                      <Popup>
+                        Your current location<br />
+                        Accuracy: {location.accuracy ? `${Math.round(location.accuracy)}m` : 'Unknown'}
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </section>
