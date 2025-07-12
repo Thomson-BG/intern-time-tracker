@@ -311,22 +311,22 @@ const App: React.FC = () => {
           setStatus({
             message: `Successfully checked out! Today: ${dailyFormatted}, This week: ${weeklyFormatted}. Google Sheets: ${result}`,
             type: 'success',
-            timestamp: timeString
+            timestamp: timestamp
           });
         } else {
           setStatus({
-            message: `Successfully ${actionText} at ${timeString}. Google Sheets: ${result}`,
+            message: `Successfully ${actionText} at ${timestamp}. Google Sheets: ${result}`,
             type: 'success',
-            timestamp: timeString
+            timestamp: timestamp
           });
         }
       }
       
       if (action === 'IN') {
         setStatus({
-          message: `Successfully ${actionText} at ${timeString}. Google Sheets: ${result}`,
+          message: `Successfully ${actionText} at ${timestamp}. Google Sheets: ${result}`,
           type: 'success',
-          timestamp: timeString
+          timestamp: timestamp
         });
       }
 

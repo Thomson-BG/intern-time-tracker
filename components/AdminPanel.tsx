@@ -302,12 +302,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, currentUserRole, curr
         try {
             // Save to Google Sheets
             const credential = {
-                type: 'admincredential' as const,
+                type: 'managerPrivilege' as const,
                 firstName: newManagerFirstName,
                 lastName: newManagerLastName,
                 employeeId: newManagerEmployeeId,
                 username: newManagerUsername,
-                password: newManagerPassword
+                password: newManagerPassword,
+                role: 'manager'
             };
 
             await saveAdminCredential(credential);

@@ -134,12 +134,13 @@ export async function submitAbsence(entry: AbsenceEntry): Promise<string> {
 }
 
 export interface AdminCredential {
-  type: 'admincredential';
+  type: 'managerPrivilege';
   firstName: string;
   lastName: string;
   employeeId: string;
   username: string;
   password: string;
+  role?: string;
 }
 
 export async function saveAdminCredential(credential: AdminCredential): Promise<string> {
@@ -177,7 +178,7 @@ export async function fetchAdminCredentials(): Promise<AdminCredential[]> {
   }
 
   try {
-    const res = await fetch(`${TIME_TRACKER_API}?action=getAdminCredentials`, {
+    const res = await fetch(`${TIME_TRACKER_API}?type=adminList`, {
       method: 'GET',
       headers: { 
         'Content-Type': 'application/json',
@@ -189,7 +190,7 @@ export async function fetchAdminCredentials(): Promise<AdminCredential[]> {
     }
 
     const data = await res.json();
-    return data.adminCredentials || [];
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching admin credentials:', error);
     return [];
@@ -202,7 +203,7 @@ export async function fetchUserTimeLogs(employeeId: string): Promise<TimeLog[]> 
   }
 
   try {
-    const res = await fetch(`${TIME_TRACKER_API}?action=getUserTimeLogs&employeeId=${encodeURIComponent(employeeId)}`, {
+    const res = await fetch(`${TIME_TRACKER_API}?type=timelog&employeeId=${encodeURIComponent(employeeId)}`, {
       method: 'GET',
       headers: { 
         'Content-Type': 'application/json',
@@ -214,7 +215,7 @@ export async function fetchUserTimeLogs(employeeId: string): Promise<TimeLog[]> 
     }
 
     const data = await res.json();
-    return data.timeLogs || [];
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching user time logs:', error);
     return [];
@@ -227,7 +228,7 @@ export async function fetchUserAbsenceLogs(employeeId: string): Promise<AbsenceE
   }
 
   try {
-    const res = await fetch(`${TIME_TRACKER_API}?action=getUserAbsenceLogs&employeeId=${encodeURIComponent(employeeId)}`, {
+    const res = await fetch(`${TIME_TRACKER_API}?type=absencelog&employeeId=${encodeURIComponent(employeeId)}`, {
       method: 'GET',
       headers: { 
         'Content-Type': 'application/json',
@@ -239,7 +240,7 @@ export async function fetchUserAbsenceLogs(employeeId: string): Promise<AbsenceE
     }
 
     const data = await res.json();
-    return data.absenceLogs || [];
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching user absence logs:', error);
     return [];
