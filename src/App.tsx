@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// Fix the import paths to point to the correct location
 import Header from '../components/Header';
 import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
 import TabBar from '../components/TabBar';
@@ -12,6 +11,7 @@ import AdminPanel from '../components/AdminPanel';
 import { Tab } from '../types/Tab';  // Import the Tab enum from the correct location
 import { logTime, TimeLog } from '../utils/timeTrackerApi';
 import { UserInfo, LocationState } from '../types';
+import { fetchTimeLogs, fetchAbsenceLogs } from '../utils/apiService';
 
 const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -40,6 +40,14 @@ const App: React.FC = () => {
   const [timeLogs, setTimeLogs]     = useState<any[]>([]);
   const [absenceLogs, setAbsenceLogs] = useState<any[]>([]);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
+
+  // Load user info from localStorage on initial render
+  useEffect(() => {
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      setUserInfo(JSON.parse(storedUserInfo));
+    }
+  }, []);
 
   // Get user's location
   const getCurrentLocation = (): Promise<GeolocationPosition> => {
@@ -259,6 +267,8 @@ const App: React.FC = () => {
     if (success && userRole && currentUser) {
       setCurrentUserRole(userRole);
       setCurrentUser(currentUser);
+      // When logging in as admin, fetch the logs
+      refreshAdminData();
     }
   };
 
@@ -266,6 +276,22 @@ const App: React.FC = () => {
     setIsAdmin(false);
     setCurrentUserRole('admin');
     setCurrentUser(null);
+  };
+
+  const refreshAdminData = async () => {
+    try {
+      // In a real app, we would fetch logs from the API
+      const date = new Date().toISOString().split('T')[0]; // Today's date
+      const [newTimeLogs, newAbsenceLogs] = await Promise.all([
+        fetchTimeLogs(undefined, date),
+        fetchAbsenceLogs()
+      ]);
+      
+      setTimeLogs(newTimeLogs);
+      setAbsenceLogs(newAbsenceLogs);
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+    }
   };
 
   return (
@@ -321,6 +347,7 @@ const App: React.FC = () => {
                 onLogout={handleLogout}
                 currentUserRole={currentUserRole}
                 currentUser={currentUser}
+                onRefresh={refreshAdminData}
               />
             )}
           </div>

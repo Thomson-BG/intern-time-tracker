@@ -5,7 +5,7 @@
   "scripts": {
     "build:css": "tailwindcss -i ./src/index.css -o ./public/output.css",
     "watch:css": "tailwindcss -i ./src/index.css -o ./public/output.css --watch",
-    "dev": "vite",
+    "dev": "npm-run-all --parallel watch:css vite",
     "build": "npm run build:css && vite build",
     "serve": "vite preview"
   },
