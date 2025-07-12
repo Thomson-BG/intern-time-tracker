@@ -326,7 +326,26 @@ const App: React.FC = () => {
                                     <StudentHelpPanel />
                                 )}
                                 <AdminLogin 
-                                    onLogin={handleAdminLogin}
+                                    onLogin={(success, userRole, currentUser) => {
+                                        if (success && currentUser) {
+                                            setIsAdmin(true);
+                                            setCurrentAdmin({
+                                                username: currentUser.employeeId,
+                                                firstName: currentUser.firstName,
+                                                lastName: currentUser.lastName
+                                            });
+                                            setStatus({ 
+                                                type: 'success', 
+                                                title: 'Login Success', 
+                                                details: `Welcome, ${currentUser.firstName} ${currentUser.lastName}!` 
+                                            });
+                                            setIsAuthenticating(false);
+                                        } else {
+                                            setIsAdmin(false);
+                                            setCurrentAdmin(null);
+                                            setIsAuthenticating(false);
+                                        }
+                                    }}
                                     onLoginSuccess={() => setActiveTab(Tab.Time)}
                                     onLoginFailure={() => {}}
                                     isLoggingIn={isAuthenticating}

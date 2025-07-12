@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { fetchAdminCredentials } from '../utils/timeTrackerApi';
+import mongoApi from '../utils/mongoApi';
 
 interface AdminLoginProps {
   onLogin: (success: boolean, userRole?: 'admin' | 'manager', currentUser?: { employeeId: string; firstName: string; lastName: string }) => void;
+  onLoginSuccess?: () => void;
+  onLoginFailure?: () => void; 
+  isLoggingIn?: boolean;
 }
 
-const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
+const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onLoginSuccess, onLoginFailure, isLoggingIn }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,46 +20,37 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
     setIsLoading(true);
 
     try {
-      // Check hardcoded admin first
-      if (username === 'admin' && password === 'password') {
-        onLogin(true, 'admin', { employeeId: 'ADMIN001', firstName: 'System', lastName: 'Administrator' });
+      // Check against MongoDB admin credentials
+      try {
+        const adminData = await mongoApi.admin.login(username, password);
+        onLogin(true, adminData.role as 'admin' | 'manager', {
+          employeeId: adminData.employeeId,
+          firstName: adminData.firstName,
+          lastName: adminData.lastName
+        });
+        onLoginSuccess?.();
         setError('');
         return;
-      }
-
-      // Check against Google Sheets admin credentials
-      try {
-        const adminCredentials = await fetchAdminCredentials();
-        const matchingCredential = adminCredentials.find(cred => 
-          cred.username === username && cred.password === password
-        );
-
-        if (matchingCredential) {
-          onLogin(true, 'manager', { 
-            employeeId: matchingCredential.employeeId, 
-            firstName: matchingCredential.firstName, 
-            lastName: matchingCredential.lastName 
-          });
-          setError('');
-          return;
-        }
-      } catch (credError) {
-        console.warn('Unable to fetch admin credentials from Google Sheets:', credError);
-        // Continue with local fallback check
+      } catch (loginError) {
+        console.error('MongoDB login failed:', loginError);
+        // Continue with fallback checks
       }
 
       // Fallback for demo manager account
       if (username === 'manager' && password === 'manager123') {
         onLogin(true, 'manager', { employeeId: 'MGR001', firstName: 'Test', lastName: 'Manager' });
+        onLoginSuccess?.();
         setError('');
         return;
       }
 
       setError('Invalid username or password. Please try again.');
       onLogin(false);
+      onLoginFailure?.();
     } catch (error) {
       setError('Authentication failed. Please try again.');
       onLogin(false);
+      onLoginFailure?.();
     } finally {
       setIsLoading(false);
     }
