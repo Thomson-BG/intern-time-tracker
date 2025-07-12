@@ -9,29 +9,29 @@ interface StatusDisplayProps {
 const getColor = (type: StatusDisplayProps['type']) => {
   switch (type) {
     case 'success':
-      return 'bg-green-50 text-green-800 border-green-200';
+      return 'bg-green-500/20 text-green-300 border-green-500/30';
     case 'error':
-      return 'bg-red-50 text-red-800 border-red-200';
+      return 'bg-red-500/20 text-red-300 border-red-500/30';
     case 'info':
     default:
-      return 'bg-blue-50 text-blue-800 border-blue-200';
+      return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
   }
 };
 
 const getIcon = (type: StatusDisplayProps['type']) => {
   switch (type) {
     case 'success':
-      return 'fa-check-circle text-green-500';
+      return 'fa-check-circle text-green-400';
     case 'error':
-      return 'fa-exclamation-circle text-red-500';
+      return 'fa-exclamation-circle text-red-400';
     case 'info':
     default:
-      return 'fa-info-circle text-blue-500';
+      return 'fa-info-circle text-blue-400';
   }
 };
 
 const StatusDisplay: React.FC<StatusDisplayProps> = ({ type, message, timestamp }) => (
-  <div className={`border-l-4 p-4 mb-6 rounded-r-lg shadow-sm ${getColor(type)} animate-slideIn`}>
+  <div className={`border-l-4 p-4 mb-6 rounded-r-lg glass backdrop-blur-sm ${getColor(type)} animate-slideIn`}>
     <div className="flex items-start">
       <i className={`fas ${getIcon(type)} mr-3 mt-0.5 text-lg`}></i>
       <div className="flex-1">

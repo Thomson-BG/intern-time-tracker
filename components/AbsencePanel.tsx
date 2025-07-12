@@ -81,76 +81,76 @@ const AbsencePanel: React.FC<AbsencePanelProps> = ({ userInfo, onAddAbsence, onS
   };
   return (
     <div className="space-y-6 slide-in">
-      <h2 className="text-lg font-semibold text-gray-900">Report Absence</h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label htmlFor="absenceDate" className="block text-sm font-medium text-gray-700 mb-1">
-              Absence Date <span className="text-red-500">*</span>
-            </label>
-            <input 
-              id="absenceDate"
-              type="date" 
-              value={absenceDate}
-              onChange={(e) => setAbsenceDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              required
-              disabled={isSubmitting}
-            />
-          </div>
+      <section className="glass-card p-6 rounded-lg border border-white/10">
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <i className="fas fa-calendar-times text-purple-400"></i>
+          Report Absence
+        </h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label htmlFor="absenceDate" className="block text-sm font-medium text-gray-300 mb-1">
+                Absence Date <span className="text-red-400">*</span>
+              </label>
+              <input 
+                id="absenceDate"
+                type="date" 
+                value={absenceDate}
+                onChange={(e) => setAbsenceDate(e.target.value)}
+                className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
+                required
+                disabled={isSubmitting}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="absenceType" className="block text-sm font-medium text-gray-300 mb-1">
+                Absence Type <span className="text-red-400">*</span>
+              </label>
+              <select 
+                id="absenceType"
+                value={absenceType}
+                onChange={(e) => setAbsenceType(e.target.value)}
+                className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
+                required
+                disabled={isSubmitting}
+              >
+                <option value="" className="bg-gray-800 text-white">Select type</option>
+                <option value="Sick" className="bg-gray-800 text-white">Sick</option>
+                <option value="Emergency" className="bg-gray-800 text-white">Emergency</option>
+                <option value="Medical Appointment" className="bg-gray-800 text-white">Medical Appointment</option>
+                <option value="Other" className="bg-gray-800 text-white">Other</option>
+              </select>
+            </div>
           
           <div>
-            <label htmlFor="absenceType" className="block text-sm font-medium text-gray-700 mb-1">
-              Absence Type <span className="text-red-500">*</span>
-            </label>
-            <select 
-              id="absenceType"
-              value={absenceType}
-              onChange={(e) => setAbsenceType(e.target.value)}
-              className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              required
-              disabled={isSubmitting}
-            >
-              <option value="">Select type</option>
-              <option value="Sick Leave">Sick Leave</option>
-              <option value="Vacation">Vacation</option>
-              <option value="Personal Leave">Personal Leave</option>
-              <option value="Emergency">Emergency</option>
-              <option value="Medical Appointment">Medical Appointment</option>
-              <option value="Bereavement">Bereavement</option>
-              <option value="Jury Duty">Jury Duty</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          
-          <div>
-            <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="reason" className="block text-sm font-medium text-gray-300 mb-1">
               Reason (Optional)
             </label>
             <textarea 
               id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full border border-gray-300 rounded-md p-3 h-24 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+              className="w-full bg-white/10 border border-white/20 rounded-md p-3 h-24 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm" 
               placeholder="Enter details about your absence (optional)"
               disabled={isSubmitting}
             />
           </div>
           
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Employee Information</h3>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p><span className="font-medium">Name:</span> {userInfo.firstName} {userInfo.lastName}</p>
-              <p><span className="font-medium">Employee ID:</span> {userInfo.employeeId}</p>
-              {userInfo.deviceName && <p><span className="font-medium">Device:</span> {userInfo.deviceName}</p>}
+          <div className="glass p-4 rounded-lg border border-white/20">
+            <h3 className="text-sm font-medium text-gray-300 mb-2">Employee Information</h3>
+            <div className="text-sm text-gray-400 space-y-1">
+              <p><span className="font-medium text-white">Name:</span> {userInfo.firstName} {userInfo.lastName}</p>
+              <p><span className="font-medium text-white">Employee ID:</span> {userInfo.employeeId}</p>
+              {userInfo.deviceName && <p><span className="font-medium text-white">Device:</span> {userInfo.deviceName}</p>}
             </div>
           </div>
           
           <button
             type="submit"
             disabled={isSubmitting || !userInfo.firstName || !userInfo.lastName || !userInfo.employeeId}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 px-4 rounded-md font-medium transition-colors flex items-center justify-center gap-2"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-3 px-4 rounded-md font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover-lift"
           >
             {isSubmitting ? (
               <>
@@ -158,11 +158,15 @@ const AbsencePanel: React.FC<AbsencePanelProps> = ({ userInfo, onAddAbsence, onS
                 Submitting Request...
               </>
             ) : (
-              'Submit Absence Request'
+              <>
+                <i className="fas fa-paper-plane mr-1"></i>
+                Submit Absence Request
+              </>
             )}
           </button>
         </div>
       </form>
+      </section>
     </div>
   );
 };
