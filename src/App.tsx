@@ -13,6 +13,7 @@ import Notification from '../components/Notification';
 import OfflineSyncNotification from '../components/OfflineSyncNotification';
 import SmartNotifications from '../components/SmartNotifications';
 import BreakTracking from '../components/BreakTracking';
+import ProjectTimeTracking from '../components/ProjectTimeTracking';
 import { Tab } from '../types/Tab';  // Import the Tab enum from the correct location
 import { logTime, TimeLog, syncOfflineEntries } from '../utils/timeTrackerApi';
 import { UserInfo, LocationState } from '../types';
@@ -52,6 +53,7 @@ const App: React.FC = () => {
   const [onlineStatus, setOnlineStatus] = useState(isOnline());
   const [showOfflineSync, setShowOfflineSync] = useState(false);
   const [showBreakTracking, setShowBreakTracking] = useState(false);
+  const [showProjectTracking, setShowProjectTracking] = useState(false);
   const [activeBreaks, setActiveBreaks] = useState<Array<{
     id: string;
     type: 'lunch' | 'break' | 'meeting' | 'other';
@@ -59,6 +61,15 @@ const App: React.FC = () => {
     endTime?: string;
     duration?: number;
     note?: string;
+  }>>([]);
+  const [activeProjects, setActiveProjects] = useState<Array<{
+    id: string;
+    projectName: string;
+    taskDescription: string;
+    startTime: string;
+    endTime?: string;
+    duration?: number;
+    billable: boolean;
   }>>([]);
 
   // Get user's location
@@ -371,6 +382,40 @@ const App: React.FC = () => {
     });
   };
 
+  const handleProjectStart = (projectData: Omit<typeof activeProjects[0], 'id'>) => {
+    const newProject = {
+      ...projectData,
+      id: Date.now().toString()
+    };
+    setActiveProjects(prev => [...prev, newProject]);
+    setShowProjectTracking(false);
+    
+    setNotification({
+      message: `Project "${projectData.projectName}" started`,
+      type: 'info'
+    });
+  };
+
+  const handleProjectEnd = (projectId: string) => {
+    setActiveProjects(prev => {
+      const updatedProjects = prev.map(project => {
+        if (project.id === projectId) {
+          const endTime = new Date().toISOString();
+          const duration = Math.floor((new Date(endTime).getTime() - new Date(project.startTime).getTime()) / (1000 * 60));
+          return { ...project, endTime, duration };
+        }
+        return project;
+      }).filter(project => !project.endTime); // Remove completed projects from active list
+      
+      return updatedProjects;
+    });
+    
+    setNotification({
+      message: 'Project time tracking ended',
+      type: 'success'
+    });
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
       <div className="max-w-3xl mx-auto glass-dark rounded-2xl shadow-2xl overflow-hidden">
@@ -406,6 +451,62 @@ const App: React.FC = () => {
               )}
               {activeTab === Tab.Absence && (
                 <AbsencePanel userInfo={userInfo} onAddAbsence={handleAddAbsence} />
+              )}
+              {activeTab === Tab.Projects && (
+                <div className="space-y-6 slide-in">
+                  <div className="card-glass rounded-lg p-6">
+                    <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <i className="fas fa-project-diagram mr-2"></i>
+                      Project Time Management
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <button
+                          onClick={() => setShowProjectTracking(true)}
+                          className="w-full btn-glass hover:glass-light text-white py-4 px-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2"
+                        >
+                          <i className="fas fa-plus"></i>
+                          <span>Start New Project</span>
+                        </button>
+                      </div>
+                      
+                      <div className="glass-light p-4 rounded-lg">
+                        <h3 className="font-semibold text-white mb-2">Active Projects</h3>
+                        <div className="text-2xl font-bold text-blue-400">{activeProjects.length}</div>
+                        <div className="text-sm text-white/70">
+                          {activeProjects.filter(p => p.billable).length} billable, {activeProjects.filter(p => !p.billable).length} non-billable
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {activeProjects.length > 0 && (
+                      <div className="mt-6">
+                        <h3 className="font-semibold text-white mb-3">Currently Active</h3>
+                        <div className="space-y-3">
+                          {activeProjects.map(project => (
+                            <div key={project.id} className="glass-light p-4 rounded-lg flex justify-between items-center">
+                              <div>
+                                <div className="text-white font-medium">{project.projectName}</div>
+                                <div className="text-white/70 text-sm">{project.taskDescription}</div>
+                                <div className="text-white/50 text-xs">
+                                  Started: {new Date(project.startTime).toLocaleTimeString()}
+                                  {project.billable && <span className="ml-2 text-green-300">• Billable</span>}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleProjectEnd(project.id)}
+                                className="btn-glass text-white py-2 px-3 rounded text-sm hover:bg-red-500/20"
+                              >
+                                End Project
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
               {activeTab === Tab.Timesheet && (
                 <>
@@ -443,6 +544,15 @@ const App: React.FC = () => {
       <SmartNotifications 
         isCheckedIn={isCheckedIn} 
         onTakeBreak={() => setShowBreakTracking(true)}
+      />
+      
+      {/* Project Tracking Modal */}
+      <ProjectTimeTracking
+        isVisible={showProjectTracking}
+        onClose={() => setShowProjectTracking(false)}
+        onProjectStart={handleProjectStart}
+        onProjectEnd={handleProjectEnd}
+        activeProjects={activeProjects}
       />
       
       {/* Break Tracking Modal */}

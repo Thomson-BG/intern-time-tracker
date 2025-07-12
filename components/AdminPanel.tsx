@@ -7,6 +7,7 @@ import {
 import { calculateWorkSummary, calculateDailyActivity, exportWorkSummaryCSV, WorkSummary, DailyActivity } from '../utils/analyticsHelpers';
 import { calculateProductivityMetrics, analyzeWorkPatterns, exportProductivityCSV, ProductivityMetrics, WorkPattern } from '../utils/productivityHelpers';
 import { createCredential, getAllCredentials, deactivateCredential, AdminCredential } from '../utils/adminCredentialsApi';
+import { testApiConnectivity } from '../utils/timeTrackerApi';
 
 // Use Apps Script URL from environment variable
 const SCRIPT_URL = import.meta.env.VITE_TIME_TRACKER_API as string;
@@ -379,6 +380,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userRole = 'Admin', u
             fetchCredentials();
         } catch (error: any) {
             alert(`Failed to delete account: ${error.message || 'Unknown error'}`);
+        }
+    };
+
+    // Test API connectivity
+    const handleTestApiConnectivity = async () => {
+        try {
+            const result = await testApiConnectivity();
+            if (result.success) {
+                alert(`✅ API Test Successful!\n\n${result.message}\n\nGoogle Sheets connection is working properly.`);
+            } else {
+                alert(`❌ API Test Failed!\n\n${result.message}\n\nPlease check your internet connection and Google Sheets configuration.`);
+            }
+        } catch (error: any) {
+            alert(`❌ API Test Error!\n\n${error.message || 'Unknown error'}\n\nUnable to test API connectivity.`);
         }
     };
 
@@ -1102,7 +1117,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userRole = 'Admin', u
                                         <i className="fas fa-cogs mr-2"></i>
                                         System Actions
                                     </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <button
                                             onClick={() => {
                                                 fetchTimeLogs();
@@ -1120,6 +1135,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userRole = 'Admin', u
                                         >
                                             <i className="fas fa-users-cog"></i>
                                             Refresh Accounts
+                                        </button>
+                                        <button
+                                            onClick={handleTestApiConnectivity}
+                                            className="btn-glass text-white py-3 px-4 rounded-lg flex items-center gap-2 hover:bg-blue-500/20"
+                                        >
+                                            <i className="fas fa-network-wired"></i>
+                                            Test API Connection
                                         </button>
                                     </div>
                                 </div>

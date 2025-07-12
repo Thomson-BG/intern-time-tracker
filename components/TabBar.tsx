@@ -10,6 +10,7 @@ const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: Tab.Time,      label: 'Time Tracking', icon: 'fa-clock' },
     { id: Tab.Absence,   label: 'Absence', icon: 'fa-calendar-times' },
+    { id: Tab.Projects,  label: 'Projects', icon: 'fa-project-diagram' },
     { id: Tab.Timesheet, label: 'My Timesheet', icon: 'fa-table' },
   ];
 

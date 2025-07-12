@@ -35,6 +35,10 @@ export async function logTime(entry: TimeLog): Promise<string> {
   }
 
   try {
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
     const res = await fetch(TIME_TRACKER_API, {
       method: 'POST',
       headers: { 
@@ -43,8 +47,11 @@ export async function logTime(entry: TimeLog): Promise<string> {
       },
       body: JSON.stringify(entry),
       mode: 'cors', // Explicitly enable CORS
-      credentials: 'omit' // Don't send credentials
+      credentials: 'omit', // Don't send credentials
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     
     if (!res.ok) {
       let errorMessage = `API error: ${res.status} ${res.statusText}`;
@@ -56,11 +63,29 @@ export async function logTime(entry: TimeLog): Promise<string> {
       } catch (e) {
         // Ignore errors reading response body
       }
+      
+      // If it's a server error (5xx) or timeout, save offline
+      if (res.status >= 500 || res.status === 408) {
+        const offlineId = OfflineStorage.saveEntry(entry, entry.type);
+        console.log('Server error occurred. Entry saved locally with ID:', offlineId);
+        throw new Error('Server temporarily unavailable. Your entry has been saved locally and will be synchronized when service is restored.');
+      }
+      
       throw new Error(errorMessage);
     }
     
-    return res.text();
+    const responseText = await res.text();
+    console.log('Successfully sent to Google Sheets:', responseText);
+    return responseText;
+    
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      // Request was aborted (timeout)
+      const offlineId = OfflineStorage.saveEntry(entry, entry.type);
+      console.log('Request timeout occurred. Entry saved locally with ID:', offlineId);
+      throw new Error('Request timeout. Your entry has been saved locally and will be synchronized when connection is restored.');
+    }
+    
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
       // Save to offline storage as fallback
       const offlineId = OfflineStorage.saveEntry(entry, entry.type);
@@ -89,4 +114,43 @@ export async function syncOfflineEntries(): Promise<{ synced: number; failed: nu
   }
 
   return { synced, failed };
+}
+
+// Test API connectivity
+export async function testApiConnectivity(): Promise<{ success: boolean; message: string }> {
+  if (!TIME_TRACKER_API) {
+    return { success: false, message: 'TIME_TRACKER_API is not configured' };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout for test
+
+    const res = await fetch(`${TIME_TRACKER_API}?test=1`, {
+      method: 'GET',
+      headers: { 
+        'Accept': 'text/plain, application/json'
+      },
+      mode: 'cors',
+      credentials: 'omit',
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (res.ok) {
+      return { success: true, message: 'API connection successful' };
+    } else {
+      return { success: false, message: `API returned status ${res.status}: ${res.statusText}` };
+    }
+    
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return { success: false, message: 'API connection timeout' };
+    }
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      return { success: false, message: 'Network error - CORS or connectivity issue' };
+    }
+    return { success: false, message: `API test failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
+  }
 }
