@@ -30,57 +30,57 @@ const TimePanel: React.FC<TimePanelProps> = ({
 
   return (
     <div className="space-y-6 slide-in">
-      <section className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-        <h2 className="text-lg font-semibold mb-4 text-gray-900 flex items-center gap-2">
-          <i className="fas fa-user text-blue-600"></i>
+      <section className="glass-card p-6 rounded-lg border border-white/10">
+        <h2 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+          <i className="fas fa-user text-purple-400"></i>
           Personal Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              First Name <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              First Name <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               name="firstName"
               value={userInfo?.firstName || ''}
               onChange={handleInputChange}
-              className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
               placeholder="Enter first name"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Last Name <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Last Name <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               name="lastName"
               value={userInfo?.lastName || ''}
               onChange={handleInputChange}
-              className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
               placeholder="Enter last name"
               required
             />
           </div>
         </div>
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Employee ID <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Employee ID <span className="text-red-400">*</span>
           </label>
           <input
             type="text"
             name="employeeId"
             value={userInfo?.employeeId || ''}
             onChange={handleInputChange}
-            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
             placeholder="Enter employee ID"
             required
           />
         </div>
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
             Device Name (Optional)
           </label>
           <input
@@ -88,15 +88,15 @@ const TimePanel: React.FC<TimePanelProps> = ({
             name="deviceName"
             value={userInfo?.deviceName || ''}
             onChange={handleInputChange}
-            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
             placeholder="e.g., My Phone, Lab PC, Personal Laptop"
           />
         </div>
       </section>
       
-      <section className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4 text-gray-900 flex items-center gap-2">
-          <i className="fas fa-clock text-blue-600"></i>
+      <section className="glass-card p-6 rounded-lg border border-white/10">
+        <h2 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+          <i className="fas fa-clock text-purple-400"></i>
           Clock In / Out
         </h2>
         
@@ -106,10 +106,10 @@ const TimePanel: React.FC<TimePanelProps> = ({
             disabled={isLogging || !isFormValid || isCheckedIn}
             className={`py-4 px-6 rounded-lg flex items-center justify-center transition-all duration-200 font-medium ${
               isCheckedIn 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600' 
                 : isFormValid && !isLogging
-                  ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 border border-green-500/30'
+                  : 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600'
             }`}
           >
             {isLogging ? (
@@ -130,10 +130,10 @@ const TimePanel: React.FC<TimePanelProps> = ({
             disabled={isLogging || !isFormValid || !isCheckedIn}
             className={`py-4 px-6 rounded-lg flex items-center justify-center transition-all duration-200 font-medium ${
               !isCheckedIn 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600' 
                 : isFormValid && !isLogging
-                  ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 border border-red-500/30'
+                  : 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600'
             }`}
           >
             {isLogging ? (
@@ -151,28 +151,28 @@ const TimePanel: React.FC<TimePanelProps> = ({
         </div>
         
         {/* Status indicator */}
-        <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+        <div className="p-4 rounded-lg glass border border-white/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <span className={`inline-block w-3 h-3 rounded-full mr-3 ${
-                isCheckedIn ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                isCheckedIn ? 'bg-green-400 animate-pulse' : 'bg-red-400'
               }`}></span>
-              <span className="text-sm font-medium text-gray-700">
-                Current Status: <span className={isCheckedIn ? 'text-green-600' : 'text-red-600'}>
+              <span className="text-sm font-medium text-white">
+                Current Status: <span className={isCheckedIn ? 'text-green-400' : 'text-red-400'}>
                   {isCheckedIn ? 'Checked In' : 'Checked Out'}
                 </span>
               </span>
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-300">
               {new Date().toLocaleTimeString()}
             </div>
           </div>
         </div>
         
         {/* Test buttons for development */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600 mb-3 flex items-center gap-2">
-            <i className="fas fa-flask text-purple-500"></i>
+        <div className="mt-6 pt-4 border-t border-white/20">
+          <h3 className="text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
+            <i className="fas fa-flask text-purple-400"></i>
             Development Test Mode
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -181,10 +181,10 @@ const TimePanel: React.FC<TimePanelProps> = ({
               disabled={isLogging || !isFormValid || isCheckedIn}
               className={`py-3 px-4 rounded-md text-sm flex items-center justify-center transition-colors ${
                 isCheckedIn 
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600' 
                   : isFormValid && !isLogging
-                    ? 'bg-green-50 border border-green-200 text-green-700 hover:bg-green-100'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ? 'bg-green-500/20 border border-green-500/30 text-green-300 hover:bg-green-500/30'
+                    : 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600'
               }`}
             >
               <i className="fas fa-flask mr-2"></i>
@@ -195,69 +195,69 @@ const TimePanel: React.FC<TimePanelProps> = ({
               disabled={isLogging || !isFormValid || !isCheckedIn}
               className={`py-3 px-4 rounded-md text-sm flex items-center justify-center transition-colors ${
                 !isCheckedIn 
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600' 
                   : isFormValid && !isLogging
-                    ? 'bg-red-50 border border-red-200 text-red-700 hover:bg-red-100'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ? 'bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30'
+                    : 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-gray-600'
               }`}
             >
               <i className="fas fa-flask mr-2"></i>
               TEST CHECK OUT
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-400 mt-2">
             Test buttons use mock location data to verify Google Sheets integration without requiring geolocation permissions.
           </p>
         </div>
       </section>
 
-      <section className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4 text-gray-900 flex items-center gap-2">
-          <i className="fas fa-map-marker-alt text-blue-600"></i>
+      <section className="glass-card p-6 rounded-lg border border-white/10">
+        <h2 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+          <i className="fas fa-map-marker-alt text-purple-400"></i>
           Location Information
         </h2>
         
         <div className="space-y-3">
           {location.status === 'requesting' && (
-            <div className="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-3"></div>
-              <span className="text-sm text-blue-700">Requesting location permission...</span>
+            <div className="flex items-center p-3 glass border border-blue-500/30 rounded-md">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400 mr-3"></div>
+              <span className="text-sm text-blue-300">Requesting location permission...</span>
             </div>
           )}
           
           {location.status === 'success' && (
-            <div className="flex items-center p-3 bg-green-50 border border-green-200 rounded-md">
-              <i className="fas fa-check-circle text-green-500 mr-3"></i>
-              <span className="text-sm text-green-700">Location captured successfully</span>
+            <div className="flex items-center p-3 glass border border-green-500/30 rounded-md">
+              <i className="fas fa-check-circle text-green-400 mr-3"></i>
+              <span className="text-sm text-green-300">Location captured successfully</span>
             </div>
           )}
           
           {location.status === 'error' && (
-            <div className="flex items-center p-3 bg-red-50 border border-red-200 rounded-md">
-              <i className="fas fa-exclamation-circle text-red-500 mr-3"></i>
-              <span className="text-sm text-red-700">Location error: {location.error}</span>
+            <div className="flex items-center p-3 glass border border-red-500/30 rounded-md">
+              <i className="fas fa-exclamation-circle text-red-400 mr-3"></i>
+              <span className="text-sm text-red-300">Location error: {location.error}</span>
             </div>
           )}
           
           {location.status === 'idle' && (
-            <div className="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-md">
-              <i className="fas fa-info-circle text-gray-500 mr-3"></i>
-              <span className="text-sm text-gray-600">Location will be captured on check-in/out</span>
+            <div className="flex items-center p-3 glass border border-gray-500/30 rounded-md">
+              <i className="fas fa-info-circle text-gray-400 mr-3"></i>
+              <span className="text-sm text-gray-300">Location will be captured on check-in/out</span>
             </div>
           )}
           
           {location.latitude && location.longitude && (
-            <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Current Location</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
+            <div className="glass p-4 rounded-md border border-white/20">
+              <h4 className="text-sm font-medium text-gray-300 mb-2">Current Location</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-400">
                 <div>
-                  <span className="font-medium">Latitude:</span> {location.latitude.toFixed(6)}
+                  <span className="font-medium text-white">Latitude:</span> {location.latitude.toFixed(6)}
                 </div>
                 <div>
-                  <span className="font-medium">Longitude:</span> {location.longitude.toFixed(6)}
+                  <span className="font-medium text-white">Longitude:</span> {location.longitude.toFixed(6)}
                 </div>
                 <div>
-                  <span className="font-medium">Accuracy:</span> {location.accuracy ? `${Math.round(location.accuracy)}m` : 'Unknown'}
+                  <span className="font-medium text-white">Accuracy:</span> {location.accuracy ? `${Math.round(location.accuracy)}m` : 'Unknown'}
                 </div>
               </div>
             </div>

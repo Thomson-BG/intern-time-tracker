@@ -295,9 +295,9 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4">
+    <div className="min-h-screen bg-black py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 hover-lift transition-all duration-300">
+        <div className="glass-card rounded-2xl overflow-hidden hover-lift transition-all duration-300">
           <Header />
           <div className="p-8">
             {!isAdmin && <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />}
@@ -328,7 +328,7 @@ const App: React.FC = () => {
                     <div className="mt-6 text-right">
                       <button
                         onClick={() => downloadTimeLogsPDF(timeLogs, userInfo)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ml-auto hover-lift"
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ml-auto hover-lift shadow-lg"
                       >
                         <i className="fas fa-download"></i>
                         Download Timesheet PDF
@@ -336,7 +336,7 @@ const App: React.FC = () => {
                     </div>
                   </>
                 )}
-                <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="mt-8 pt-6 border-t border-gray-700">
                   <AdminLogin onLogin={handleLogin} />
                 </div>
               </>
