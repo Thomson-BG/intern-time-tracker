@@ -132,3 +132,116 @@ export async function logTime(entry: TimeLog): Promise<string> {
 export async function submitAbsence(entry: AbsenceEntry): Promise<string> {
   return logTime(entry as any);
 }
+
+export interface AdminCredential {
+  type: 'admincredential';
+  firstName: string;
+  lastName: string;
+  employeeId: string;
+  username: string;
+  password: string;
+}
+
+export async function saveAdminCredential(credential: AdminCredential): Promise<string> {
+  if (!TIME_TRACKER_API) {
+    throw new Error('Google Sheets API URL not configured. Please check VITE_TIME_TRACKER_API in .env file.');
+  }
+
+  console.log('Saving admin credential to Google Sheets:', credential);
+  
+  try {
+    const res = await fetch(TIME_TRACKER_API, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credential)
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const result = await res.text();
+    console.log('Google Sheets API response:', result);
+    return result;
+  } catch (error) {
+    console.error('Error saving admin credential:', error);
+    throw error;
+  }
+}
+
+export async function fetchAdminCredentials(): Promise<AdminCredential[]> {
+  if (!TIME_TRACKER_API) {
+    throw new Error('Google Sheets API URL not configured. Please check VITE_TIME_TRACKER_API in .env file.');
+  }
+
+  try {
+    const res = await fetch(`${TIME_TRACKER_API}?action=getAdminCredentials`, {
+      method: 'GET',
+      headers: { 
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.adminCredentials || [];
+  } catch (error) {
+    console.error('Error fetching admin credentials:', error);
+    return [];
+  }
+}
+
+export async function fetchUserTimeLogs(employeeId: string): Promise<TimeLog[]> {
+  if (!TIME_TRACKER_API) {
+    throw new Error('Google Sheets API URL not configured. Please check VITE_TIME_TRACKER_API in .env file.');
+  }
+
+  try {
+    const res = await fetch(`${TIME_TRACKER_API}?action=getUserTimeLogs&employeeId=${encodeURIComponent(employeeId)}`, {
+      method: 'GET',
+      headers: { 
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.timeLogs || [];
+  } catch (error) {
+    console.error('Error fetching user time logs:', error);
+    return [];
+  }
+}
+
+export async function fetchUserAbsenceLogs(employeeId: string): Promise<AbsenceEntry[]> {
+  if (!TIME_TRACKER_API) {
+    throw new Error('Google Sheets API URL not configured. Please check VITE_TIME_TRACKER_API in .env file.');
+  }
+
+  try {
+    const res = await fetch(`${TIME_TRACKER_API}?action=getUserAbsenceLogs&employeeId=${encodeURIComponent(employeeId)}`, {
+      method: 'GET',
+      headers: { 
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.absenceLogs || [];
+  } catch (error) {
+    console.error('Error fetching user absence logs:', error);
+    return [];
+  }
+}

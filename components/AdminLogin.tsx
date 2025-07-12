@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { fetchAdminCredentials } from '../utils/timeTrackerApi';
 
 interface AdminLoginProps {
   onLogin: (success: boolean, userRole?: 'admin' | 'manager', currentUser?: { employeeId: string; firstName: string; lastName: string }) => void;
@@ -15,19 +16,44 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
     setError('');
     setIsLoading(true);
 
-    // Simulate authentication check with multiple user types
     try {
-      // Simple hardcoded check for demonstration. In production, this would check against a database.
+      // Check hardcoded admin first
       if (username === 'admin' && password === 'password') {
         onLogin(true, 'admin', { employeeId: 'ADMIN001', firstName: 'System', lastName: 'Administrator' });
         setError('');
-      } else if (username === 'manager' && password === 'manager123') {
+        return;
+      }
+
+      // Check against Google Sheets admin credentials
+      try {
+        const adminCredentials = await fetchAdminCredentials();
+        const matchingCredential = adminCredentials.find(cred => 
+          cred.username === username && cred.password === password
+        );
+
+        if (matchingCredential) {
+          onLogin(true, 'manager', { 
+            employeeId: matchingCredential.employeeId, 
+            firstName: matchingCredential.firstName, 
+            lastName: matchingCredential.lastName 
+          });
+          setError('');
+          return;
+        }
+      } catch (credError) {
+        console.warn('Unable to fetch admin credentials from Google Sheets:', credError);
+        // Continue with local fallback check
+      }
+
+      // Fallback for demo manager account
+      if (username === 'manager' && password === 'manager123') {
         onLogin(true, 'manager', { employeeId: 'MGR001', firstName: 'Test', lastName: 'Manager' });
         setError('');
-      } else {
-        setError('Invalid username or password. Please try again.');
-        onLogin(false);
+        return;
       }
+
+      setError('Invalid username or password. Please try again.');
+      onLogin(false);
     } catch (error) {
       setError('Authentication failed. Please try again.');
       onLogin(false);

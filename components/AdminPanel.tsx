@@ -4,6 +4,7 @@ import {
     downloadTimeLogsCSV, downloadTimeLogsPDF, downloadTimeLogsHTML,
     downloadAbsencesCSV, downloadAbsencesPDF, downloadAbsencesHTML
 } from '../utils/downloadHelpers';
+import { saveAdminCredential, fetchAdminCredentials } from '../utils/timeTrackerApi';
 
 // Use your Google Apps Script URL - updated to match the API URL from .env
 const SCRIPT_URL = import.meta.env.VITE_TIME_TRACKER_API || 'https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec';
@@ -87,6 +88,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, currentUserRole, curr
     const [newManagerEmployeeId, setNewManagerEmployeeId] = useState<string>('');
     const [newManagerFirstName, setNewManagerFirstName] = useState<string>('');
     const [newManagerLastName, setNewManagerLastName] = useState<string>('');
+    const [newManagerUsername, setNewManagerUsername] = useState<string>('');
+    const [newManagerPassword, setNewManagerPassword] = useState<string>('');
 
     // Date range filtering
     const [startDate, setStartDate] = useState<string>('');
@@ -278,14 +281,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, currentUserRole, curr
     }, []);
 
     // Handle assigning manager privileges (only admins can do this)
-    const handleAssignManagerPrivileges = () => {
+    const handleAssignManagerPrivileges = async () => {
         if (currentUserRole !== 'admin') {
             alert('Only administrators can assign manager privileges.');
             return;
         }
 
-        if (!newManagerEmployeeId || !newManagerFirstName || !newManagerLastName) {
-            alert('Please fill in all fields.');
+        if (!newManagerEmployeeId || !newManagerFirstName || !newManagerLastName || !newManagerUsername || !newManagerPassword) {
+            alert('Please fill in all fields including username and password.');
             return;
         }
 
@@ -296,16 +299,42 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, currentUserRole, curr
             return;
         }
 
-        const newManager: AdminUser = {
-            employeeId: newManagerEmployeeId,
-            firstName: newManagerFirstName,
-            lastName: newManagerLastName,
-            role: 'manager',
-            assignedBy: currentUser?.employeeId || 'Unknown',
-            assignedAt: new Date().toISOString().split('T')[0]
-        };
+        try {
+            // Save to Google Sheets
+            const credential = {
+                type: 'admincredential' as const,
+                firstName: newManagerFirstName,
+                lastName: newManagerLastName,
+                employeeId: newManagerEmployeeId,
+                username: newManagerUsername,
+                password: newManagerPassword
+            };
 
-        setAdminUsers(prev => [...prev, newManager]);
+            await saveAdminCredential(credential);
+
+            const newManager: AdminUser = {
+                employeeId: newManagerEmployeeId,
+                firstName: newManagerFirstName,
+                lastName: newManagerLastName,
+                role: 'manager',
+                assignedBy: currentUser?.employeeId || 'Unknown',
+                assignedAt: new Date().toISOString().split('T')[0]
+            };
+
+            setAdminUsers(prev => [...prev, newManager]);
+
+            // Clear form
+            setNewManagerEmployeeId('');
+            setNewManagerFirstName('');
+            setNewManagerLastName('');
+            setNewManagerUsername('');
+            setNewManagerPassword('');
+
+            alert('Manager privileges assigned successfully and saved to Google Sheets!');
+        } catch (error) {
+            console.error('Error saving admin credential:', error);
+            alert('Failed to save admin credentials to Google Sheets. Please try again.');
+        }
         
         // Clear form
         setNewManagerEmployeeId('');
@@ -390,9 +419,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, currentUserRole, curr
         <div className="slide-in">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Admin Panel</h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                        Logged in as: <span className="font-medium">{currentUser?.firstName} {currentUser?.lastName}</span> 
+                    <h2 className="text-2xl font-bold text-white">Admin Panel</h2>
+                    <p className="text-sm text-gray-300 mt-1">
+                        Logged in as: <span className="font-medium text-white">{currentUser?.firstName} {currentUser?.lastName}</span> 
                         <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
                             currentUserRole === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
                         }`}>
@@ -425,28 +454,42 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, currentUserRole, curr
                     <CardTitle>Admin User Management</CardTitle>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div>
-                            <h4 className="text-md font-medium text-gray-800 mb-3">Assign Manager Privileges</h4>
+                            <h4 className="text-md font-medium text-white mb-3">Assign Manager Privileges</h4>
                             <div className="space-y-3">
-                                <input
-                                    type="text"
-                                    placeholder="Employee ID"
-                                    value={newManagerEmployeeId}
-                                    onChange={(e) => setNewManagerEmployeeId(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                />
                                 <input
                                     type="text"
                                     placeholder="First Name"
                                     value={newManagerFirstName}
                                     onChange={(e) => setNewManagerFirstName(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
                                 />
                                 <input
                                     type="text"
                                     placeholder="Last Name"
                                     value={newManagerLastName}
                                     onChange={(e) => setNewManagerLastName(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Employee ID"
+                                    value={newManagerEmployeeId}
+                                    onChange={(e) => setNewManagerEmployeeId(e.target.value)}
+                                    className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Username"
+                                    value={newManagerUsername}
+                                    onChange={(e) => setNewManagerUsername(e.target.value)}
+                                    className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={newManagerPassword}
+                                    onChange={(e) => setNewManagerPassword(e.target.value)}
+                                    className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
                                 />
                                 <button
                                     onClick={handleAssignManagerPrivileges}
@@ -458,7 +501,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, currentUserRole, curr
                             </div>
                         </div>
                         <div>
-                            <h4 className="text-md font-medium text-gray-800 mb-3">Current Admin Users</h4>
+                            <h4 className="text-md font-medium text-white mb-3">Current Admin Users</h4>
                             <div className="space-y-2 max-h-64 overflow-y-auto">
                                 {adminUsers.map((user) => (
                                     <div key={user.employeeId} className={`p-3 rounded-lg border text-sm ${
@@ -510,45 +553,45 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, currentUserRole, curr
                                 onChange={(e) => setUseAllDates(e.target.checked)}
                                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             />
-                            <label htmlFor="useAllDates" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="useAllDates" className="text-sm font-medium text-white">
                                 Show All Dates (Default)
                             </label>
                         </div>
                         
                         {!useAllDates && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-4 border-blue-200 bg-blue-50 p-4 rounded-md">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-4 border-purple-500/30 glass p-4 rounded-md">
                                 <div>
-                                    <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                    <label htmlFor="startDate" className="block text-sm font-medium text-white mb-1">Start Date</label>
                                     <input
                                         type="date"
                                         id="startDate"
                                         value={startDate}
                                         onChange={e => setStartDate(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                        className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                                    <label htmlFor="endDate" className="block text-sm font-medium text-white mb-1">End Date</label>
                                     <input
                                         type="date"
                                         id="endDate"
                                         value={endDate}
                                         onChange={e => setEndDate(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                        className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
                                     />
                                 </div>
                             </div>
                         )}
                         
                         <div>
-                            <label htmlFor="filterEmployeeId" className="block text-sm font-medium text-gray-700 mb-1">Filter by Employee ID</label>
+                            <label htmlFor="filterEmployeeId" className="block text-sm font-medium text-white mb-1">Filter by Employee ID</label>
                             <input
                                 type="text"
                                 id="filterEmployeeId"
                                 value={filterEmployeeId}
                                 onChange={e => setFilterEmployeeId(e.target.value)}
-                                placeholder="Enter Employee ID to filter"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                placeholder="Enter Employee ID to filter (leave empty to show ALL data)"
+                                className="w-full bg-white/10 border border-white/20 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm"
                             />
                         </div>
                     </div>
@@ -556,7 +599,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, currentUserRole, curr
                 
                 <Card className="col-span-full">
                     <CardTitle>Download Options</CardTitle>
-                    <div className="mb-4 text-sm text-gray-600">
+                    <div className="mb-4 text-sm text-gray-300">
                         <p>Downloads will include {useAllDates ? 'all records' : `records from ${startDate || 'beginning'} to ${endDate || 'today'}`}
                         {filterEmployeeId && ` for Employee ID containing "${filterEmployeeId}"`}</p>
                         <p className="text-xs mt-1">Found: {filteredTimeLogs.length} time records, {filteredAbsences.length} absence records</p>

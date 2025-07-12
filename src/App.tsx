@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
+import { fetchUserTimeLogs, fetchUserAbsenceLogs } from '../utils/timeTrackerApi';
+import { createGPSTimestamp } from '../utils/timezoneUtils';
 import TabBar from '../components/TabBar';
 import TimePanel from '../components/TimePanel';
 import AbsencePanel from '../components/AbsencePanel';
@@ -122,6 +124,61 @@ const App: React.FC = () => {
     return `${hours}h ${minutes}m`;
   };
 
+  // Handle PDF download with Google Sheets data
+  const handleDownloadPDF = async () => {
+    try {
+      if (!userInfo.employeeId) {
+        setStatus({
+          message: 'Please fill in your employee ID first',
+          type: 'error'
+        });
+        return;
+      }
+
+      setStatus({
+        message: 'Fetching your data from Google Sheets...',
+        type: 'info'
+      });
+
+      // Fetch user's data from Google Sheets
+      const [sheetTimeLogs, sheetAbsenceLogs] = await Promise.all([
+        fetchUserTimeLogs(userInfo.employeeId),
+        fetchUserAbsenceLogs(userInfo.employeeId)
+      ]);
+
+      // Combine with local logs as backup
+      const allTimeLogs = [...sheetTimeLogs, ...timeLogs];
+      
+      // Remove duplicates based on timestamp and action
+      const uniqueTimeLogs = allTimeLogs.filter((log, index, arr) => 
+        arr.findIndex(l => l.timestamp === log.timestamp && l.action === log.action) === index
+      );
+
+      if (uniqueTimeLogs.length === 0) {
+        setStatus({
+          message: 'No time logs found to download',
+          type: 'error'
+        });
+        return;
+      }
+
+      downloadTimeLogsPDF(uniqueTimeLogs, userInfo);
+      
+      setStatus({
+        message: `PDF downloaded successfully with ${uniqueTimeLogs.length} time logs`,
+        type: 'success'
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      // Fallback to local data
+      downloadTimeLogsPDF(timeLogs, userInfo);
+      setStatus({
+        message: 'Downloaded PDF with local data (Google Sheets unavailable)',
+        type: 'info'
+      });
+    }
+  };
+
   // Get user's location
   const getCurrentLocation = (): Promise<GeolocationPosition> => {
     return new Promise((resolve, reject) => {
@@ -207,7 +264,8 @@ const App: React.FC = () => {
         }));
       }
       
-      const timestamp = new Date().toISOString();
+      // Create timestamp based on GPS coordinates timezone
+      const timestamp = await createGPSTimestamp(latitude, longitude);
       const deviceId = `${navigator.platform}-${navigator.userAgent.slice(0, 50)}`;
       
       const timeEntry: TimeLog = {
@@ -379,7 +437,7 @@ const App: React.FC = () => {
                     </OnboardingTooltip>
                     <div className="mt-6 text-right">
                       <button
-                        onClick={() => downloadTimeLogsPDF(timeLogs, userInfo)}
+                        onClick={handleDownloadPDF}
                         className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ml-auto hover-lift shadow-lg"
                       >
                         <i className="fas fa-download"></i>
