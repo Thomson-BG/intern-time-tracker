@@ -6,13 +6,15 @@ import {
 } from '../utils/downloadHelpers';
 import { calculateWorkSummary, calculateDailyActivity, exportWorkSummaryCSV, WorkSummary, DailyActivity } from '../utils/analyticsHelpers';
 import { calculateProductivityMetrics, analyzeWorkPatterns, exportProductivityCSV, ProductivityMetrics, WorkPattern } from '../utils/productivityHelpers';
+import { createCredential, getAllCredentials, deactivateCredential, AdminCredential } from '../utils/adminCredentialsApi';
 
 // Use Apps Script URL from environment variable
 const SCRIPT_URL = import.meta.env.VITE_TIME_TRACKER_API as string;
 
 interface AdminPanelProps {
     onLogout: () => void;
-    // currentUserId is not required for the data API approach, but you may keep it for admin auth UI logic if desired
+    userRole?: 'Admin' | 'Manager' | null;
+    userInfo?: { fullName?: string; email?: string } | null;
 }
 
 // --- Reusable Components for this Panel ---
@@ -74,7 +76,7 @@ const StatusDisplay: React.FC<StatusDisplayProps> = ({ type, title, details }) =
 
 // --- MAIN ADMIN PANEL COMPONENT ---
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userRole = 'Admin', userInfo }) => {
     const [timeLogs, setTimeLogs] = useState<TimeLog[]>([]);
     const [absenceLogs, setAbsenceLogs] = useState<AbsenceLog[]>([]);
     const [loadingTimeLogs, setLoadingTimeLogs] = useState<boolean>(true);
@@ -109,6 +111,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     const [productivityMetrics, setProductivityMetrics] = useState<Map<string, ProductivityMetrics>>(new Map());
     const [workPatterns, setWorkPatterns] = useState<Map<string, WorkPattern>>(new Map());
     const [mainTab, setMainTab] = useState<'dashboard' | 'analytics' | 'management'>('dashboard');
+    
+    // Credential Management State  
+    const [credentials, setCredentials] = useState<AdminCredential[]>([]);
+    const [loadingCredentials, setLoadingCredentials] = useState<boolean>(false);
+    const [errorCredentials, setErrorCredentials] = useState<string | null>(null);
 
     // Fetch ALL time logs (no employeeId filter)
     const fetchTimeLogs = useCallback(async () => {
@@ -219,7 +226,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     useEffect(() => {
         fetchTimeLogs();
         fetchAbsenceLogs();
-    }, [fetchTimeLogs, fetchAbsenceLogs]);
+        fetchCredentials();
+    }, [fetchTimeLogs, fetchAbsenceLogs, fetchCredentials]);
 
     // Filter time logs by date (optional) and optionally by employee ID
     // Show all time logs by default, only filter if specifically requested
@@ -259,6 +267,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         });
     }, [absenceLogs, filterEmployeeId, showAllDates, selectedDate, selectedEndDate]);
 
+    // Fetch credentials from Google Sheets
+    const fetchCredentials = useCallback(async () => {
+        if (userRole !== 'Admin') return; // Only admins can view credentials
+        
+        setLoadingCredentials(true);
+        setErrorCredentials(null);
+        
+        try {
+            const creds = await getAllCredentials();
+            setCredentials(creds);
+        } catch (error: any) {
+            console.error('Error fetching credentials:', error);
+            setErrorCredentials(`Failed to fetch credentials: ${error.message || "Unknown error"}`);
+            setCredentials([]);
+        } finally {
+            setLoadingCredentials(false);
+        }
+    }, [userRole]);
+
     // Create Manager Account Function
     const handleCreateManager = async () => {
         if (!newManagerEmail || !newManagerPassword || !newManagerName || !newManagerLoginName) {
@@ -268,21 +295,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         
         setCreatingManager(true);
         try {
-            // In a real implementation, this would create a new manager account
-            // For now, we'll just simulate it and show the credentials
-            const managerCredentials = {
+            const managerCredential: AdminCredential = {
+                fullName: newManagerName,
                 email: newManagerEmail,
-                password: newManagerPassword,
-                name: newManagerName,
                 loginName: newManagerLoginName,
-                role: 'manager',
-                createdAt: new Date().toLocaleString()
+                password: newManagerPassword,
+                role: 'Manager',
+                active: true
             };
             
-            // Store in localStorage for demonstration (in real app, this would be sent to backend)
-            const existingManagers = JSON.parse(localStorage.getItem('managers') || '[]');
-            existingManagers.push(managerCredentials);
-            localStorage.setItem('managers', JSON.stringify(existingManagers));
+            // Create in Google Sheets
+            await createCredential(managerCredential);
             
             alert(`Manager account created successfully!\n\nCredentials:\nLogin Name: ${newManagerLoginName}\nPassword: ${newManagerPassword}\n\nPlease provide these credentials to the manager.`);
             
@@ -293,8 +316,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             setNewManagerLoginName('');
             setShowUserManagement(false);
             
-        } catch (error) {
-            alert('Failed to create manager account. Please try again.');
+            // Refresh credentials list
+            fetchCredentials();
+            
+        } catch (error: any) {
+            alert(`Failed to create manager account: ${error.message || 'Unknown error'}`);
         } finally {
             setCreatingManager(false);
         }
@@ -309,21 +335,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         
         setCreatingAdmin(true);
         try {
-            // In a real implementation, this would create a new admin account
-            // For now, we'll just simulate it and show the credentials
-            const adminCredentials = {
+            const adminCredential: AdminCredential = {
+                fullName: newAdminName,
                 email: newAdminEmail,
-                password: newAdminPassword,
-                name: newAdminName,
                 loginName: newAdminLoginName,
-                role: 'admin',
-                createdAt: new Date().toLocaleString()
+                password: newAdminPassword,
+                role: 'Admin',
+                active: true
             };
             
-            // Store in localStorage for demonstration (in real app, this would be sent to backend)
-            const existingAdmins = JSON.parse(localStorage.getItem('admins') || '[]');
-            existingAdmins.push(adminCredentials);
-            localStorage.setItem('admins', JSON.stringify(existingAdmins));
+            // Create in Google Sheets
+            await createCredential(adminCredential);
             
             alert(`Admin account created successfully!\n\nCredentials:\nLogin Name: ${newAdminLoginName}\nPassword: ${newAdminPassword}\n\nPlease provide these credentials to the admin.`);
             
@@ -333,25 +355,55 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             setNewAdminName('');
             setNewAdminLoginName('');
             
-        } catch (error) {
-            alert('Failed to create admin account. Please try again.');
+            // Refresh credentials list
+            fetchCredentials();
+            
+        } catch (error: any) {
+            alert(`Failed to create admin account: ${error.message || 'Unknown error'}`);
         } finally {
             setCreatingAdmin(false);
         }
     };
 
+    // Delete credential function
+    const handleDeleteCredential = async (loginName: string) => {
+        if (!confirm(`Are you sure you want to delete the account for ${loginName}? This action cannot be undone.`)) {
+            return;
+        }
+        
+        try {
+            await deactivateCredential(loginName);
+            alert('Account has been successfully deactivated.');
+            
+            // Refresh credentials list
+            fetchCredentials();
+        } catch (error: any) {
+            alert(`Failed to delete account: ${error.message || 'Unknown error'}`);
+        }
+    };
+
     return (
         <div className="slide-in">
-            <h2 className="text-2xl font-bold text-white mb-6">Admin Panel</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">
+                {userRole === 'Admin' ? 'Admin Panel' : 'Manager Panel'}
+                {userInfo?.fullName && (
+                    <span className="text-sm text-white/70 ml-2">
+                        - Welcome, {userInfo.fullName}
+                    </span>
+                )}
+            </h2>
 
             <div className="flex justify-end mb-6 space-x-2">
-                <button 
-                    onClick={() => setShowUserManagement(!showUserManagement)} 
-                    className="btn-glass text-white font-bold py-2 px-4 rounded-md text-sm transition-all duration-300 flex items-center gap-2"
-                >
-                    <i className="fas fa-users"></i> User Management
-                </button>
-                <button onClick={() => { fetchTimeLogs(); fetchAbsenceLogs(); }} className="btn-glass text-white font-bold py-2 px-4 rounded-md text-sm transition-all duration-300 flex items-center gap-2">
+                {/* User Management - Only visible to Admins */}
+                {userRole === 'Admin' && (
+                    <button 
+                        onClick={() => setShowUserManagement(!showUserManagement)} 
+                        className="btn-glass text-white font-bold py-2 px-4 rounded-md text-sm transition-all duration-300 flex items-center gap-2"
+                    >
+                        <i className="fas fa-users"></i> User Management
+                    </button>
+                )}
+                <button onClick={() => { fetchTimeLogs(); fetchAbsenceLogs(); fetchCredentials(); }} className="btn-glass text-white font-bold py-2 px-4 rounded-md text-sm transition-all duration-300 flex items-center gap-2">
                     <i className="fas fa-sync-alt"></i> Refresh Data
                 </button>
                 <button onClick={onLogout} className="btn-glass text-white font-bold py-2 px-4 rounded-md text-sm transition-all duration-300 flex items-center gap-2 hover:bg-red-500/20">
@@ -383,24 +435,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                     <i className="fas fa-chart-bar"></i>
                     <span>Analytics</span>
                 </button>
-                <button
-                    onClick={() => setMainTab('management')}
-                    className={`py-3 px-6 font-semibold rounded-lg transition-all duration-300 flex items-center space-x-2 ${
-                        mainTab === 'management'
-                            ? 'glass-light text-white border-white/30 shadow-lg transform scale-105'
-                            : 'glass text-white/70 hover:text-white hover:glass-light'
-                    }`}
-                >
-                    <i className="fas fa-cogs"></i>
-                    <span>Management</span>
-                </button>
+                {/* Management tab - Only visible to Admins */}
+                {userRole === 'Admin' && (
+                    <button
+                        onClick={() => setMainTab('management')}
+                        className={`py-3 px-6 font-semibold rounded-lg transition-all duration-300 flex items-center space-x-2 ${
+                            mainTab === 'management'
+                                ? 'glass-light text-white border-white/30 shadow-lg transform scale-105'
+                                : 'glass text-white/70 hover:text-white hover:glass-light'
+                        }`}
+                    >
+                        <i className="fas fa-cogs"></i>
+                        <span>Management</span>
+                    </button>
+                )}
             </div>
 
             {/* Tab Content */}
             {mainTab === 'dashboard' && (
                 <>
-                    {/* User Management Section */}
-                    {showUserManagement && (
+                    {/* User Management Section - Only visible to Admins */}
+                    {showUserManagement && userRole === 'Admin' && (
                 <div className="space-y-6">
                     <Card className="mb-6">
                         <CardTitle>User Management - Create Manager Account</CardTitle>
@@ -947,88 +1002,129 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 </div>
             )}
 
-            {/* Management Tab */}
-            {mainTab === 'management' && (
+            {/* Management Tab - Only visible to Admins */}
+            {mainTab === 'management' && userRole === 'Admin' && (
                 <div className="space-y-6">
                     <Card>
-                        <CardTitle>System Management</CardTitle>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <h4 className="text-lg font-semibold text-white mb-4">Created Accounts</h4>
-                                <div className="space-y-3">
-                                    <div className="glass-light p-4 rounded-lg">
-                                        <h5 className="font-semibold text-white mb-2">Manager Accounts</h5>
-                                        <div className="space-y-2 max-h-32 overflow-y-auto">
-                                            {JSON.parse(localStorage.getItem('managers') || '[]').map((manager: any, index: number) => (
-                                                <div key={index} className="text-sm">
-                                                    <div className="text-white">{manager.name}</div>
-                                                    <div className="text-white/70">Login: {manager.loginName}</div>
-                                                    <div className="text-xs text-white/50">{manager.createdAt}</div>
+                        <CardTitle>Account Management</CardTitle>
+                        
+                        {loadingCredentials && (
+                            <div className="text-center py-4">
+                                <i className="fas fa-spinner fa-spin text-white mr-2"></i>
+                                <span className="text-white">Loading accounts...</span>
+                            </div>
+                        )}
+                        
+                        {errorCredentials && (
+                            <div className="status-error rounded-lg p-4 mb-4">
+                                <div className="flex items-center space-x-2">
+                                    <i className="fas fa-exclamation-triangle"></i>
+                                    <span className="text-white font-medium">{errorCredentials}</span>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {!loadingCredentials && !errorCredentials && (
+                            <div className="space-y-6">
+                                {/* Admin Accounts Section */}
+                                <div>
+                                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                                        <i className="fas fa-user-shield mr-2"></i>
+                                        Admin Accounts
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {credentials.filter(cred => cred.role === 'Admin').map((admin, index) => (
+                                            <div key={index} className="glass-light p-4 rounded-lg flex justify-between items-center">
+                                                <div>
+                                                    <div className="text-white font-medium">{admin.fullName}</div>
+                                                    <div className="text-white/70 text-sm">{admin.email}</div>
+                                                    <div className="text-white/70 text-sm">Login: {admin.loginName}</div>
+                                                    <div className="text-xs text-white/50">
+                                                        Status: {admin.active ? 'Active' : 'Inactive'}
+                                                    </div>
                                                 </div>
-                                            ))}
-                                            {JSON.parse(localStorage.getItem('managers') || '[]').length === 0 && (
-                                                <div className="text-white/70 text-sm">No manager accounts created</div>
-                                            )}
-                                        </div>
+                                                {admin.loginName !== 'admin' && ( // Prevent deletion of system admin
+                                                    <button
+                                                        onClick={() => handleDeleteCredential(admin.loginName)}
+                                                        className="btn-glass hover:bg-red-500/20 text-white py-2 px-3 rounded-lg flex items-center gap-2"
+                                                        title="Delete Account"
+                                                    >
+                                                        <i className="fas fa-trash"></i>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {credentials.filter(cred => cred.role === 'Admin').length === 0 && (
+                                            <div className="text-white/70 text-sm glass-light p-4 rounded-lg">
+                                                No admin accounts found in Google Sheets
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="glass-light p-4 rounded-lg">
-                                        <h5 className="font-semibold text-white mb-2">Admin Accounts</h5>
-                                        <div className="space-y-2 max-h-32 overflow-y-auto">
-                                            {JSON.parse(localStorage.getItem('admins') || '[]').map((admin: any, index: number) => (
-                                                <div key={index} className="text-sm">
-                                                    <div className="text-white">{admin.name}</div>
-                                                    <div className="text-white/70">Login: {admin.loginName}</div>
-                                                    <div className="text-xs text-white/50">{admin.createdAt}</div>
+                                </div>
+                                
+                                {/* Manager Accounts Section */}
+                                <div>
+                                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                                        <i className="fas fa-users mr-2"></i>
+                                        Manager Accounts
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {credentials.filter(cred => cred.role === 'Manager').map((manager, index) => (
+                                            <div key={index} className="glass-light p-4 rounded-lg flex justify-between items-center">
+                                                <div>
+                                                    <div className="text-white font-medium">{manager.fullName}</div>
+                                                    <div className="text-white/70 text-sm">{manager.email}</div>
+                                                    <div className="text-white/70 text-sm">Login: {manager.loginName}</div>
+                                                    <div className="text-xs text-white/50">
+                                                        Status: {manager.active ? 'Active' : 'Inactive'}
+                                                    </div>
                                                 </div>
-                                            ))}
-                                            {JSON.parse(localStorage.getItem('admins') || '[]').length === 0 && (
-                                                <div className="text-white/70 text-sm">No additional admin accounts created</div>
-                                            )}
-                                        </div>
+                                                <button
+                                                    onClick={() => handleDeleteCredential(manager.loginName)}
+                                                    className="btn-glass hover:bg-red-500/20 text-white py-2 px-3 rounded-lg flex items-center gap-2"
+                                                    title="Delete Account"
+                                                >
+                                                    <i className="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {credentials.filter(cred => cred.role === 'Manager').length === 0 && (
+                                            <div className="text-white/70 text-sm glass-light p-4 rounded-lg">
+                                                No manager accounts found in Google Sheets
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                {/* System Actions */}
+                                <div>
+                                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                                        <i className="fas fa-cogs mr-2"></i>
+                                        System Actions
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <button
+                                            onClick={() => {
+                                                fetchTimeLogs();
+                                                fetchAbsenceLogs();
+                                                fetchCredentials();
+                                            }}
+                                            className="btn-glass text-white py-3 px-4 rounded-lg flex items-center gap-2"
+                                        >
+                                            <i className="fas fa-sync-alt"></i>
+                                            Refresh All Data
+                                        </button>
+                                        <button
+                                            onClick={() => fetchCredentials()}
+                                            className="btn-glass text-white py-3 px-4 rounded-lg flex items-center gap-2"
+                                        >
+                                            <i className="fas fa-users-cog"></i>
+                                            Refresh Accounts
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                            <div>
-                                <h4 className="text-lg font-semibold text-white mb-4">System Actions</h4>
-                                <div className="space-y-3">
-                                    <button
-                                        onClick={() => {
-                                            if (confirm('This will clear all locally stored manager accounts. Are you sure?')) {
-                                                localStorage.removeItem('managers');
-                                                alert('Manager accounts cleared');
-                                            }
-                                        }}
-                                        className="w-full btn-glass text-white py-3 px-4 rounded-lg flex items-center gap-2 hover:bg-red-500/20"
-                                    >
-                                        <i className="fas fa-trash"></i>
-                                        Clear Manager Accounts
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (confirm('This will clear all locally stored admin accounts. Are you sure?')) {
-                                                localStorage.removeItem('admins');
-                                                alert('Admin accounts cleared');
-                                            }
-                                        }}
-                                        className="w-full btn-glass text-white py-3 px-4 rounded-lg flex items-center gap-2 hover:bg-red-500/20"
-                                    >
-                                        <i className="fas fa-trash"></i>
-                                        Clear Admin Accounts
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            fetchTimeLogs();
-                                            fetchAbsenceLogs();
-                                            alert('Data refreshed from source');
-                                        }}
-                                        className="w-full btn-glass text-white py-3 px-4 rounded-lg flex items-center gap-2"
-                                    >
-                                        <i className="fas fa-sync-alt"></i>
-                                        Force Data Refresh
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </Card>
                 </div>
             )}

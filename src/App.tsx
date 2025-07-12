@@ -10,6 +10,9 @@ import StatusDisplay from '../components/StatusDisplay';
 import AdminLogin from '../components/AdminLogin';
 import AdminPanel from '../components/AdminPanel';
 import Notification from '../components/Notification';
+import OfflineSyncNotification from '../components/OfflineSyncNotification';
+import SmartNotifications from '../components/SmartNotifications';
+import BreakTracking from '../components/BreakTracking';
 import { Tab } from '../types/Tab';  // Import the Tab enum from the correct location
 import { logTime, TimeLog, syncOfflineEntries } from '../utils/timeTrackerApi';
 import { UserInfo, LocationState } from '../types';
@@ -17,6 +20,8 @@ import { OfflineStorage, isOnline, addOnlineListener, addOfflineListener } from 
 
 const App: React.FC = () => {
   const [isAdmin, setIsAdmin]       = useState(false);
+  const [adminRole, setAdminRole]   = useState<'Admin' | 'Manager' | null>(null);
+  const [adminInfo, setAdminInfo]   = useState<{ fullName?: string; email?: string } | null>(null);
   const [activeTab, setActiveTab]   = useState<Tab>(Tab.Time);
   const [userInfo, setUserInfo]     = useState<UserInfo>({
     firstName: '',
@@ -45,6 +50,16 @@ const App: React.FC = () => {
     type: 'success' | 'error' | 'info' | 'warning';
   } | null>(null);
   const [onlineStatus, setOnlineStatus] = useState(isOnline());
+  const [showOfflineSync, setShowOfflineSync] = useState(false);
+  const [showBreakTracking, setShowBreakTracking] = useState(false);
+  const [activeBreaks, setActiveBreaks] = useState<Array<{
+    id: string;
+    type: 'lunch' | 'break' | 'meeting' | 'other';
+    startTime: string;
+    endTime?: string;
+    duration?: number;
+    note?: string;
+  }>>([]);
 
   // Get user's location
   const getCurrentLocation = (): Promise<GeolocationPosition> => {
@@ -90,6 +105,13 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleOnline = async () => {
       setOnlineStatus(true);
+      
+      // Check for offline entries when coming back online
+      const offlineCount = OfflineStorage.getEntryCount();
+      if (offlineCount > 0) {
+        setShowOfflineSync(true);
+      }
+      
       setNotification({
         message: 'Connection restored! Syncing offline data...',
         type: 'info'
@@ -121,6 +143,12 @@ const App: React.FC = () => {
 
     const unsubscribeOnline = addOnlineListener(handleOnline);
     const unsubscribeOffline = addOfflineListener(handleOffline);
+
+    // Check for existing offline entries on app start
+    const initialOfflineCount = OfflineStorage.getEntryCount();
+    if (initialOfflineCount > 0) {
+      setShowOfflineSync(true);
+    }
 
     return () => {
       unsubscribeOnline();
@@ -232,7 +260,7 @@ const App: React.FC = () => {
       setIsLogging(false);
     }
   };
-  const handleAddAbsence = (absenceData: { date: string; type: string; reason: string }) => {
+  const handleAddAbsence = async (absenceData: { date: string; type: string; reason: string }) => {
     // Validate required fields
     if (!userInfo.firstName || !userInfo.lastName || !userInfo.employeeId) {
       setStatus({
@@ -266,19 +294,27 @@ const App: React.FC = () => {
         userAgent: navigator.userAgent
       };
 
+      // Send to Google Sheets API
+      await logTime(absenceEntry);
+
       // Add to local absence logs
       setAbsenceLogs(prev => [...prev, absenceEntry]);
 
       // Show success message
+      const isOffline = !onlineStatus;
       setStatus({
-        message: `Absence request submitted successfully for ${absenceData.date}`,
+        message: `Absence request submitted successfully for ${absenceData.date}${isOffline ? ' (saved offline)' : ''}`,
         type: 'success',
         timestamp: new Date().toLocaleString()
       });
 
-      // TODO: In a real implementation, you might want to send this to the same 
-      // data API or a different endpoint for absence tracking
-      // await logTime(absenceEntry);
+      // Show notification for offline saves
+      if (isOffline) {
+        setNotification({
+          message: 'Absence entry saved offline and will sync when connection is restored.',
+          type: 'info'
+        });
+      }
 
     } catch (error) {
       console.error('Error submitting absence:', error);
@@ -288,15 +324,51 @@ const App: React.FC = () => {
       });
     }
   };
-  const handleLogin = (success: boolean) => {
+  const handleLogin = (success: boolean, role?: 'Admin' | 'Manager', fullName?: string, email?: string) => {
     if (success) {
       setIsAdmin(true);
+      setAdminRole(role || null);
+      setAdminInfo({ fullName, email });
     } else {
       setStatus({
         message: 'Invalid username or password',
         type: 'error'
       });
     }
+  };
+  
+  const handleBreakStart = (breakData: Omit<typeof activeBreaks[0], 'id'>) => {
+    const newBreak = {
+      ...breakData,
+      id: Date.now().toString()
+    };
+    setActiveBreaks(prev => [...prev, newBreak]);
+    setShowBreakTracking(false);
+    
+    setNotification({
+      message: `${breakData.type.charAt(0).toUpperCase() + breakData.type.slice(1)} break started`,
+      type: 'info'
+    });
+  };
+
+  const handleBreakEnd = (breakId: string) => {
+    setActiveBreaks(prev => {
+      const updatedBreaks = prev.map(breakEntry => {
+        if (breakEntry.id === breakId) {
+          const endTime = new Date().toISOString();
+          const duration = Math.floor((new Date(endTime).getTime() - new Date(breakEntry.startTime).getTime()) / (1000 * 60));
+          return { ...breakEntry, endTime, duration };
+        }
+        return breakEntry;
+      }).filter(breakEntry => !breakEntry.endTime); // Remove completed breaks from active list
+      
+      return updatedBreaks;
+    });
+    
+    setNotification({
+      message: 'Break ended successfully',
+      type: 'success'
+    });
   };
 
   return (
@@ -329,6 +401,7 @@ const App: React.FC = () => {
                   location={location}
                   isLogging={isLogging}
                   isCheckedIn={isCheckedIn}
+                  onTakeBreak={() => setShowBreakTracking(true)}
                 />
               )}
               {activeTab === Tab.Absence && (
@@ -342,7 +415,17 @@ const App: React.FC = () => {
               <AdminLogin onLogin={handleLogin} />
             </>
           ) : (
-            <AdminPanel logs={timeLogs} absences={absenceLogs} onLogout={() => setIsAdmin(false)} />
+            <AdminPanel 
+              logs={timeLogs} 
+              absences={absenceLogs} 
+              onLogout={() => {
+                setIsAdmin(false);
+                setAdminRole(null);
+                setAdminInfo(null);
+              }}
+              userRole={adminRole}
+              userInfo={adminInfo}
+            />
           )}
         </div>
         
@@ -355,6 +438,26 @@ const App: React.FC = () => {
           <span className="text-white/70 text-xs">© All rights reserved</span>
         </footer>
       </div>
+      
+      {/* Smart Notifications */}
+      <SmartNotifications 
+        isCheckedIn={isCheckedIn} 
+        onTakeBreak={() => setShowBreakTracking(true)}
+      />
+      
+      {/* Break Tracking Modal */}
+      <BreakTracking
+        isVisible={showBreakTracking}
+        onClose={() => setShowBreakTracking(false)}
+        onBreakStart={handleBreakStart}
+        onBreakEnd={handleBreakEnd}
+        activeBreaks={activeBreaks}
+      />
+      
+      {/* Offline Sync Notification */}
+      {showOfflineSync && (
+        <OfflineSyncNotification onClose={() => setShowOfflineSync(false)} />
+      )}
       
       {/* Notification */}
       {notification && (

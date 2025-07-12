@@ -9,6 +9,7 @@ interface TimePanelProps {
   location: LocationState;
   isLogging: boolean;
   isCheckedIn: boolean;
+  onTakeBreak?: () => void;
 }
 
 const TimePanel: React.FC<TimePanelProps> = ({ 
@@ -17,7 +18,8 @@ const TimePanel: React.FC<TimePanelProps> = ({
   onLogAction,
   location, 
   isLogging,
-  isCheckedIn
+  isCheckedIn,
+  onTakeBreak
 }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -90,7 +92,7 @@ const TimePanel: React.FC<TimePanelProps> = ({
           <i className="fas fa-clock mr-2"></i>
           2. Clock In / Out
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => onLogAction('IN')}
             disabled={isLogging || !isFormValid || isCheckedIn}
@@ -134,6 +136,19 @@ const TimePanel: React.FC<TimePanelProps> = ({
                 {!isCheckedIn ? 'NOT CHECKED IN' : 'CHECK OUT'}
               </>
             )}
+          </button>
+          {/* Break Button */}
+          <button
+            onClick={onTakeBreak}
+            disabled={!isCheckedIn || !isFormValid}
+            className={`py-4 px-6 rounded-lg flex items-center justify-center transition-all duration-300 font-semibold ${
+              isCheckedIn && isFormValid
+                ? 'bg-blue-500/80 hover:bg-blue-500 text-white transform hover:scale-105 shadow-lg hover:shadow-blue-500/25'
+                : 'bg-gray-500/50 text-gray-300 cursor-not-allowed'
+            }`}
+          >
+            <i className="fas fa-coffee mr-2"></i>
+            TAKE BREAK
           </button>
         </div>
         
