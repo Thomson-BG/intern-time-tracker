@@ -1,0 +1,41 @@
+[
+  {
+    "_id": "md0ug1pbtyoat4p0spl",
+    "firstName": "John",
+    "lastName": "Doe",
+    "employeeId": "EMP001",
+    "action": "IN",
+    "timestamp": "7/12/2025 3:55:00 PM",
+    "rawTimestamp": 1752360917663,
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "createdAt": "2025-07-12T22:55:17.663Z",
+    "updatedAt": "2025-07-12T22:55:17.663Z"
+  },
+  {
+    "_id": "md0ug6z5chn8vp8zaww",
+    "firstName": "John",
+    "lastName": "Doe",
+    "employeeId": "EMP001",
+    "action": "OUT",
+    "timestamp": "7/12/2025 4:55:00 PM",
+    "rawTimestamp": 1752360924497,
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "duration": "0 hours, 0 minutes",
+    "createdAt": "2025-07-12T22:55:24.497Z",
+    "updatedAt": "2025-07-12T22:55:24.497Z"
+  },
+  {
+    "_id": "md0umrrkh5tq49jbvf",
+    "firstName": "Alice",
+    "lastName": "Johnson",
+    "employeeId": "EMP003",
+    "deviceName": "Test Device",
+    "action": "IN",
+    "timestamp": "7/12/2025 10:59:00 PM",
+    "rawTimestamp": 1752361231375,
+    "createdAt": "2025-07-12T23:00:31.376Z",
+    "updatedAt": "2025-07-12T23:00:31.376Z"
+  }
+]
