@@ -1,0 +1,14 @@
+[
+  {
+    "_id": "md0ugc635n0hvp9g6l",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "employeeId": "EMP002",
+    "date": "2025-07-13",
+    "absenceType": "Sick",
+    "reason": "Doctor appointment",
+    "submitted": "7/12/2025, 10:55:31 PM",
+    "createdAt": "2025-07-12T22:55:31.227Z",
+    "updatedAt": "2025-07-12T22:55:31.227Z"
+  }
+]
