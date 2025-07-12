@@ -8,6 +8,8 @@ import TimesheetPanel from '../components/TimesheetPanel';
 import StatusDisplay from '../components/StatusDisplay';
 import AdminLogin from '../components/AdminLogin';
 import AdminPanel from '../components/AdminPanel';
+import StudentHelpPanel from '../components/StudentHelpPanel';
+import OnboardingTooltip from '../components/OnboardingTooltip';
 import { Tab } from '../types/Tab';  // Import the Tab enum from the correct location
 import { logTime, TimeLog } from '../utils/timeTrackerApi';
 import { UserInfo, LocationState } from '../types';
@@ -305,26 +307,44 @@ const App: React.FC = () => {
             {!isAdmin ? (
               <>
                 {activeTab === Tab.Time && (
-                  <TimePanel
-                    userInfo={userInfo}
-                    setUserInfo={setUserInfo}
-                    onLogAction={handleLogAction}
-                    onTestLogAction={handleTestLogAction}
-                    location={location}
-                    isLogging={isLogging}
-                    isCheckedIn={isCheckedIn}
-                  />
+                  <OnboardingTooltip
+                    id="time-tracking"
+                    title="Welcome to Time Tracking!"
+                    content="Fill in your information and use the buttons to clock in and out. Your location helps verify you're at the right workplace."
+                  >
+                    <TimePanel
+                      userInfo={userInfo}
+                      setUserInfo={setUserInfo}
+                      onLogAction={handleLogAction}
+                      onTestLogAction={handleTestLogAction}
+                      location={location}
+                      isLogging={isLogging}
+                      isCheckedIn={isCheckedIn}
+                    />
+                  </OnboardingTooltip>
                 )}
                 {activeTab === Tab.Absence && (
-                  <AbsencePanel 
-                    userInfo={userInfo} 
-                    onAddAbsence={handleAddAbsence}
-                    onStatusUpdate={setStatus}
-                  />
+                  <OnboardingTooltip
+                    id="absence-reporting"
+                    title="Absence Reporting"
+                    content="Always report when you can't come to work! Choose the type of absence and add details if needed. This helps supervisors plan coverage."
+                  >
+                    <AbsencePanel 
+                      userInfo={userInfo} 
+                      onAddAbsence={handleAddAbsence}
+                      onStatusUpdate={setStatus}
+                    />
+                  </OnboardingTooltip>
                 )}
                 {activeTab === Tab.Timesheet && (
                   <>
-                    <TimesheetPanel logs={timeLogs} userInfo={userInfo} />
+                    <OnboardingTooltip
+                      id="timesheet-view"
+                      title="Your Digital Timesheet"
+                      content="Review your work history here and download PDF reports for your records. Keep track of your professional growth!"
+                    >
+                      <TimesheetPanel logs={timeLogs} userInfo={userInfo} />
+                    </OnboardingTooltip>
                     <div className="mt-6 text-right">
                       <button
                         onClick={() => downloadTimeLogsPDF(timeLogs, userInfo)}
@@ -335,6 +355,9 @@ const App: React.FC = () => {
                       </button>
                     </div>
                   </>
+                )}
+                {activeTab === Tab.Help && (
+                  <StudentHelpPanel />
                 )}
                 <div className="mt-8 pt-6 border-t border-gray-700">
                   <AdminLogin onLogin={handleLogin} />

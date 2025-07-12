@@ -17,13 +17,13 @@ interface AdminPanelProps {
 // --- Reusable Components for this Panel ---
 
 const Card: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className = '' }) => (
-    <div className={`p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm ${className}`}>
+    <div className={`p-4 glass-card rounded-lg border border-white/10 ${className}`}>
         {children}
     </div>
 );
 
 const CardTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <h3 className="text-lg font-semibold text-gray-800 mb-3">{children}</h3>
+    <h3 className="text-lg font-semibold text-white mb-3">{children}</h3>
 );
 
 interface DownloadButtonProps {
@@ -37,7 +37,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ onClick, text, color, i
     <button
         onClick={onClick}
         disabled={disabled}
-        className={`bg-${color}-600 hover:bg-${color}-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed`}
+        className={`bg-gradient-to-r from-${color}-600 to-${color}-700 hover:from-${color}-700 hover:to-${color}-800 text-white font-bold py-2 px-4 rounded-md text-sm transition-all duration-200 flex items-center gap-2 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover-lift`}
     >
         <i className={`fas ${icon}`}></i>
         <span>{text}</span>

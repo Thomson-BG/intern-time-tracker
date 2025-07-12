@@ -26,6 +26,12 @@ const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
       icon: 'fa-file-alt',
       description: 'View and download records'
     },
+    { 
+      id: Tab.Help, 
+      label: 'Student Help', 
+      icon: 'fa-question-circle',
+      description: 'FAQs and guidance for interns'
+    },
   ];
 
   return (
