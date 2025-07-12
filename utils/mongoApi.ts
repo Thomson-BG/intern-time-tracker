@@ -1,5 +1,8 @@
-// MongoDB API service for the intern time tracker
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+// API service for the intern time tracker
+// In production, use relative URLs to work with Netlify functions
+// In development, use the local backend server
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 export interface TimeLog {
   _id?: string;
