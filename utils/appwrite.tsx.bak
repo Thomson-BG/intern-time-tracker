@@ -5,17 +5,19 @@ import AdminPanel from './components/AdminPanel'; // Make sure this component is
 import { downloadTimeLogsPDF } from './utils/downloadHelpers';
 
 // Import Appwrite services and constants
-import {
-    account,
-    databases,
-    ID,
-    Query,
-    Permission,
-    Role,
-    APPWRITE_DATABASE_ID,
-    APPWRITE_TIMELOGS_COLLECTION_ID,
-    APPWRITE_ABENCELOGS_COLLECTION_ID,
-} from './utils/appwrite';
+// TODO: These should be imported from a separate appwrite config file
+// For now, commenting out to prevent circular import
+// import {
+//     account,
+//     databases,
+//     ID,
+//     Query,
+//     Permission,
+//     Role,
+//     APPWRITE_DATABASE_ID,
+//     APPWRITE_TIMELOGS_COLLECTION_ID,
+//     APPWRITE_ABENCELOGS_COLLECTION_ID,
+// } from './utils/appwrite';
 
 // --- HELPER FUNCTIONS ---
 const getDeviceId = async () => {
@@ -627,7 +629,7 @@ const App: React.FC = () => {
                                 isLogging={isLogging}
                                 />}
                             {activeTab === Tab.Absence && <AbsencePanel userInfo={userInfo} onAddAbsence={handleAddAbsence} />}
-                            {activeTab === Tab.Timesheet && <TimesheetPanel userInfo={userInfo} />} {/* Removed logs={timeLogs} */}
+                            {activeTab === Tab.Timesheet && <TimesheetPanel userInfo={userInfo} />}
                             <AdminLogin 
                                 onLogin={handleAdminLogin}
                                 onLoginSuccess={() => setActiveTab(Tab.Time)} // Redirect to Time tab on successful login
@@ -636,7 +638,7 @@ const App: React.FC = () => {
                             />
                         </>
                     ) : (
-                        <AdminPanel onLogout={handleAdminLogout} currentUserId={currentAppwriteUserId} /> {/* Removed logs and absences props */}
+                        <AdminPanel onLogout={handleAdminLogout} currentUserId={currentAppwriteUserId} />
                     )}
                 </div>
             </div>
