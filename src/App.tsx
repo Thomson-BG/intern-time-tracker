@@ -12,8 +12,8 @@ import StatusDisplay from '../components/StatusDisplay';
 import StudentHelpPanel from '../components/StudentHelpPanel';
 import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
 
-// Import MongoDB/File-based API services (more reliable than Google Sheets)
-import mongoApi, { timeLogsApi, absenceLogsApi, adminApi, TimeLog, AbsenceLog } from '../utils/mongoApi';
+// Import Google Sheets API services (restored primary backend)
+import googleSheetsApi, { timeLogsApi, absenceLogsApi, adminApi, TimeLog, AbsenceLog } from '../utils/googleSheetsApi';
 
 // Helper functions
 const getDeviceId = async () => {
@@ -59,14 +59,14 @@ const App: React.FC = () => {
     useEffect(() => {
         const checkBackendHealth = async () => {
             try {
-                const isHealthy = await mongoApi.healthCheck();
+                const isHealthy = await googleSheetsApi.healthCheck();
                 setBackendHealthy(isHealthy);
                 
                 if (!isHealthy) {
                     setStatus({
                         type: 'error',
-                        title: 'Backend Connection Issue',
-                        details: 'Cannot connect to the backend API. Please check if the server is running.'
+                        title: 'Google Sheets Connection Issue',
+                        details: 'Cannot connect to Google Sheets API. Please check if the Apps Script is deployed correctly.'
                     });
                 }
             } catch (error) {
@@ -74,8 +74,8 @@ const App: React.FC = () => {
                 setBackendHealthy(false);
                 setStatus({
                     type: 'error',
-                    title: 'Backend Connection Failed',
-                    details: 'Backend server is not responding. Please check the configuration.'
+                    title: 'Google Sheets Connection Failed',
+                    details: 'Google Sheets API is not responding. Please check the configuration.'
                 });
             }
         };
