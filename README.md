@@ -12,7 +12,6 @@ ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking
 - ✅ **Google Sheets Backend**: Direct integration with Google Sheets for data storage
 - ✅ **Google Apps Script API**: Custom backend service running on Google's infrastructure  
 - ✅ **Real-time Data Sync**: Immediate data updates to Google Sheets
-- ✅ **Admin Authentication**: Credential validation against Google Sheets database
 - ✅ **Time & Absence Logging**: Full functionality restored for all tracking features
 - ✅ **Zero Infrastructure**: No server maintenance required, runs entirely on Google platform
 
@@ -21,9 +20,7 @@ ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking
 ### ✨ Core Functionality
 - **Time Tracking**: Clock in/out with GPS location verification
 - **Absence Reporting**: Submit and track absence requests with detailed categorization
-- **Digital Timesheet**: View, filter, and download timesheet records as PDF
 - **Admin Panel**: Comprehensive management tools for supervisors
-- **Real-time Status**: Live feedback and status updates
 - **Google Sheets Integration**: Reliable data storage with automatic cloud backup
 
 ### 🎨 Design & User Experience
@@ -94,8 +91,6 @@ ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking
    ```
 
 3. **Configure Google Sheets Backend:**
-   - Follow the detailed guide in `GOOGLE_SHEETS_INTEGRATION.md`
-   - Set up the Google Apps Script using code from `GOOGLE_APPS_SCRIPT.js`
    - Configure the API URL in `.env` file
 
 4. **Environment Setup:**
@@ -162,17 +157,6 @@ This application uses Google Sheets as its database through Google Apps Script. 
 - `cd backend && npm run dev` - Start backend with auto-reload
 - `cd backend && npm start` - Start backend in production mode
 
-## MongoDB Setup
-
-For detailed MongoDB installation and configuration instructions, see **[MONGODB_SETUP.md](./MONGODB_SETUP.md)**.
-
-The setup guide covers:
-- Local MongoDB installation (Windows, macOS, Linux)
-- MongoDB Atlas cloud setup
-- Database configuration
-- Initial admin user creation
-- Troubleshooting common issues
-
 ## API Documentation
 
 The backend provides RESTful API endpoints:
@@ -189,10 +173,8 @@ The backend provides RESTful API endpoints:
 
 ### Admin
 - `POST /api/admin/login` - Admin authentication
-- `POST /api/admin/credentials` - Create new admin user
-- `GET /api/admin/credentials` - Get all admin users
 
-### Health Check
+# Health Check
 - `GET /api/health` - Backend health check
 
 ## Usage Guide
@@ -202,14 +184,11 @@ The backend provides RESTful API endpoints:
 2. **Clock In**: Click "CHECK IN" when you arrive at your work location
 3. **Clock Out**: Click "CHECK OUT" when you finish your shift
 4. **Report Absences**: Use the "Report Absence" tab for sick days or time off
-5. **View Records**: Check your timesheet and download PDF reports
-6. **Get Help**: Visit the "Student Help" tab for FAQs and guidance
+5. **Get Help**: Visit the "Student Help" tab for FAQs and guidance
 
 ### For Administrators
 1. **Login**: Use admin credentials to access management features
 2. **View Reports**: Monitor all student time logs and absences
-3. **Download Data**: Export comprehensive reports in multiple formats
-4. **Manage Users**: Create new admin accounts and view system statistics
 
 ## Security & Privacy
 
@@ -245,16 +224,6 @@ For production deployment, consider:
 - Configuring reverse proxy (nginx)
 - Enabling HTTPS
 - Setting up automated backups
-
-## Migration from Legacy Systems
-
-If you're migrating from the previous Google Sheets or Appwrite setup:
-
-1. **Export existing data** from your current system
-2. **Follow the MongoDB setup guide** in [MONGODB_SETUP.md](./MONGODB_SETUP.md)
-3. **Import data** using MongoDB tools (mongoimport)
-4. **Update environment variables** to point to the new MongoDB backend
-5. **Test the migration** with a few sample entries
 
 ## Feature Roadmap
 
@@ -295,25 +264,7 @@ This project follows modern web development best practices:
 - RESTful API design
 - Database best practices
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Backend won't start**: Check MongoDB connection and port availability
-2. **Frontend can't connect**: Verify backend is running and environment variables are set
-3. **Database errors**: Ensure MongoDB is running and accessible
-4. **Build failures**: Clear node_modules and reinstall dependencies
-
-For detailed troubleshooting, see [MONGODB_SETUP.md](./MONGODB_SETUP.md).
 
 ## License
 
-This project is designed for educational use in school transportation management.
-
-## Support
-
-For technical issues or feature requests:
-1. Check the [MongoDB Setup Guide](./MONGODB_SETUP.md)
-2. Review the troubleshooting section
-3. Check backend logs for error messages
-4. Verify all environment variables are configured correctly
+This project is designed for educational use in school internship Tracking Systems (ITS), uses the MIT License, and is free to use, copy, duplicate, edit, etc. Per the license agreement. 
