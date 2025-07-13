@@ -21,12 +21,6 @@ const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
       description: 'Submit absence requests'
     },
     { 
-      id: Tab.Timesheet, 
-      label: 'My Timesheet', 
-      icon: 'fa-file-alt',
-      description: 'View and download records'
-    },
-    { 
       id: Tab.Help, 
       label: 'Student Help', 
       icon: 'fa-question-circle',

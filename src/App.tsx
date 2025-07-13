@@ -5,7 +5,6 @@ import Header from '../components/Header';
 import TabBar from '../components/TabBar';
 import TimePanel from '../components/TimePanel';
 import AbsencePanel from '../components/AbsencePanel';
-import TimesheetPanel from '../components/TimesheetPanel';
 import AdminPanel from '../components/AdminPanel';
 import AdminLogin from '../components/AdminLogin';
 import StatusDisplay from '../components/StatusDisplay';
@@ -74,13 +73,9 @@ const App: React.FC = () => {
     useEffect(() => {
         const checkBackendHealth = async () => {
             try {
-                const isHealthy = await googleSheetsApi.healthCheck();
-                setBackendHealthy(isHealthy);
-                
-                // Don't show error messages for health check failures - let individual operations handle errors
-                if (!isHealthy) {
-                    console.warn('Google Sheets health check failed, but continuing...');
-                }
+                // Skip health check to avoid showing errors at app startup
+                // Individual operations will handle their own errors
+                setBackendHealthy(true);
             } catch (error) {
                 console.warn('Health check error:', error);
                 setBackendHealthy(true); // Assume healthy and let individual operations handle errors
@@ -313,9 +308,6 @@ const App: React.FC = () => {
                                         userInfo={userInfo} 
                                         onAddAbsence={handleAddAbsence} 
                                     />
-                                )}
-                                {activeTab === Tab.Timesheet && (
-                                    <TimesheetPanel userInfo={userInfo} />
                                 )}
                                 {activeTab === Tab.Help && (
                                     <StudentHelpPanel />
