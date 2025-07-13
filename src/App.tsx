@@ -12,8 +12,8 @@ import StatusDisplay from '../components/StatusDisplay';
 import StudentHelpPanel from '../components/StudentHelpPanel';
 import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
 
-// Import MongoDB API services
-import mongoApi, { timeLogsApi, absenceLogsApi, adminApi, TimeLog, AbsenceLog } from '../utils/mongoApi';
+// Import Google Sheets API services
+import googleSheetsApi, { timeLogsApi, absenceLogsApi, adminApi, TimeLog, AbsenceLog } from '../utils/googleSheetsApi';
 
 // Helper functions
 const getDeviceId = async () => {
@@ -59,22 +59,32 @@ const App: React.FC = () => {
     useEffect(() => {
         const checkBackendHealth = async () => {
             try {
-                const isHealthy = await mongoApi.healthCheck();
+                const isHealthy = await googleSheetsApi.healthCheck();
                 setBackendHealthy(isHealthy);
-                if (!isHealthy) {
+                
+                // Only show error in production or if we have a definitive failure
+                if (!isHealthy && !import.meta.env.DEV) {
                     setStatus({
                         type: 'error',
-                        title: 'Backend Connection Issue',
-                        details: 'Cannot connect to the backend server. Please ensure the backend is running on port 5000.'
+                        title: 'Google Sheets Connection Issue',
+                        details: 'Cannot connect to the Google Sheets backend. Please check the API configuration.'
                     });
                 }
             } catch (error) {
-                setBackendHealthy(false);
-                setStatus({
-                    type: 'error',
-                    title: 'Backend Connection Failed',
-                    details: 'Backend server is not responding. Please start the backend server.'
-                });
+                console.warn('Health check error:', error);
+                
+                // In development, be more lenient about health check failures
+                if (import.meta.env.DEV) {
+                    setBackendHealthy(true); // Be optimistic in development
+                    console.log('Development mode: Ignoring health check failure due to CORS restrictions');
+                } else {
+                    setBackendHealthy(false);
+                    setStatus({
+                        type: 'error',
+                        title: 'Google Sheets Connection Failed',
+                        details: 'Google Sheets backend is not responding. Please check the configuration.'
+                    });
+                }
             }
         };
         checkBackendHealth();
@@ -92,11 +102,11 @@ const App: React.FC = () => {
             return;
         }
 
-        if (!backendHealthy) {
+        if (!backendHealthy && !import.meta.env.DEV) {
             setStatus({
                 type: 'error',
-                title: 'Backend Unavailable',
-                details: 'Cannot connect to the backend server. Please ensure it is running.'
+                title: 'Google Sheets Unavailable',
+                details: 'Cannot connect to the Google Sheets backend. Please check the configuration.'
             });
             clearStatus();
             return;
@@ -190,11 +200,11 @@ const App: React.FC = () => {
              return;
         }
 
-        if (!backendHealthy) {
+        if (!backendHealthy && !import.meta.env.DEV) {
             setStatus({
                 type: 'error',
-                title: 'Backend Unavailable',
-                details: 'Cannot connect to the backend server. Please ensure it is running.'
+                title: 'Google Sheets Unavailable',
+                details: 'Cannot connect to the Google Sheets backend. Please check the configuration.'
             });
             clearStatus();
             return;
@@ -287,15 +297,14 @@ const App: React.FC = () => {
                         
                         {status && <StatusDisplay {...status} />}
 
-                        {!backendHealthy && (
+                        {!backendHealthy && !import.meta.env.DEV && (
                             <div className="mb-6 p-4 bg-red-900/50 border border-red-500/30 rounded-lg">
                                 <div className="flex items-center space-x-3">
                                     <i className="fas fa-exclamation-triangle text-red-400 text-xl"></i>
                                     <div>
-                                        <h3 className="text-lg font-bold text-red-300">Backend Connection Issue</h3>
+                                        <h3 className="text-lg font-bold text-red-300">Google Sheets Connection Issue</h3>
                                         <p className="text-sm text-red-200">
-                                            Please ensure the backend server is running. 
-                                            Run: <code className="bg-black/30 px-2 py-1 rounded">cd backend && npm run dev</code>
+                                            Please ensure the Google Sheets Apps Script is properly configured and deployed.
                                         </p>
                                     </div>
                                 </div>
