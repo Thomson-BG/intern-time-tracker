@@ -37,5 +37,16 @@
     "rawTimestamp": 1752361231375,
     "createdAt": "2025-07-12T23:00:31.376Z",
     "updatedAt": "2025-07-12T23:00:31.376Z"
+  },
+  {
+    "_id": "md137whofen8luwewrm",
+    "firstName": "Test",
+    "lastName": "User",
+    "employeeId": "TEST001",
+    "action": "IN",
+    "timestamp": "07/13/2025 10:59:00 AM",
+    "rawTimestamp": 1752378000000,
+    "createdAt": "2025-07-13T03:00:54.204Z",
+    "updatedAt": "2025-07-13T03:00:54.204Z"
   }
 ]

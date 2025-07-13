@@ -10,5 +10,17 @@
     "submitted": "7/12/2025, 10:55:31 PM",
     "createdAt": "2025-07-12T22:55:31.227Z",
     "updatedAt": "2025-07-12T22:55:31.227Z"
+  },
+  {
+    "_id": "md1383831clbni2h25k",
+    "firstName": "Test",
+    "lastName": "User",
+    "employeeId": "TEST001",
+    "date": "2025-07-13",
+    "absenceType": "Personal",
+    "reason": "Medical appointment",
+    "submitted": "07/13/2025, 3:01:00 AM",
+    "createdAt": "2025-07-13T03:01:02.931Z",
+    "updatedAt": "2025-07-13T03:01:02.931Z"
   }
 ]
