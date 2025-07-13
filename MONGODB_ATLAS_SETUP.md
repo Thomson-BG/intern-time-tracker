@@ -6,11 +6,11 @@ This guide provides step-by-step instructions for setting up MongoDB Atlas with 
 
 The following MongoDB Atlas configuration has been set up:
 
-- **Username**: `joshuamthomson1985`
-- **Password**: `Bulldog2025`
-- **Cluster**: `thomsoninnovations.pr5idap.mongodb.net`
+- **Username**: ``
+- **Password**: ``
+- **Cluster**: ``
 - **Database**: `intern-time-tracker`
-- **Application Name**: `ThomsonInnovations`
+- **Application Name**: ``
 
 ## 📁 Files Configured
 
@@ -18,7 +18,7 @@ The following MongoDB Atlas configuration has been set up:
 ```env
 # MongoDB Atlas Configuration
 PORT=5000
-MONGODB_URI=mongodb+srv://joshuamthomson1985:Bulldog2025@thomsoninnovations.pr5idap.mongodb.net/intern-time-tracker?retryWrites=true&w=majority&appName=ThomsonInnovations
+MONGODB_URI=mongodb+srv://ENTER MONGODB URL
 
 # JWT Secret (change this in production)
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
@@ -119,11 +119,11 @@ node test-connection.js
 To manage your cluster:
 1. Visit: https://cloud.mongodb.com/
 2. Sign in with your MongoDB Atlas account
-3. Select the "ThomsonInnovations" project
+3. Select the "Project Name" project
 4. Manage your cluster settings
 
 ### Key Settings to Verify:
-- **Database Access**: User `joshuamthomson1985` has read/write access
+- **Database Access**: User `USERNAME` has read/write access
 - **Network Access**: Your IP addresses are whitelisted
 - **Cluster Status**: Cluster is running (not paused)
 
