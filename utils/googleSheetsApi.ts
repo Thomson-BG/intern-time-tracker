@@ -1,6 +1,6 @@
 // Google Sheets API service for the intern time tracker
 // This service communicates with the Google Apps Script backend
-const GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec';
+const GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec';
 
 // Google Sheets information - based on deployed Apps Script
 // Spreadsheet URL: https://docs.google.com/spreadsheets/d/1LVY9UfJq3pZr_Y7bF37n3JYnsOL1slTSMp7TnxAqLRI/edit?gid=0#gid=0
