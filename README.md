@@ -112,11 +112,15 @@ ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking
 
 ## Google Sheets Integration
 
-This application uses Google Sheets as its database through Google Apps Script. For detailed setup instructions, see [GOOGLE_SHEETS_INTEGRATION.md](./GOOGLE_SHEETS_INTEGRATION.md).
+This application uses Google Sheets as its database through Google Apps Script. 
+
+### 🚨 IMPORTANT: CORS Error Fix
+
+If you're experiencing CORS errors or the check-in/check-out functionality is not working, you need to deploy the corrected Google Apps Script. **[📋 Follow the complete deployment guide here](./GOOGLE_APPS_SCRIPT_DEPLOYMENT.md)**
 
 ### Quick Setup:
-1. Deploy the Google Apps Script using code from `GOOGLE_APPS_SCRIPT.js`
-2. Configure your Google Sheets with the required structure
+1. **Deploy the Google Apps Script** using code from `FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js` (⚠️ **Most Important Step**)
+2. Configure your Google Sheets with the required structure  
 3. Update the `.env` file with your Apps Script URL
 4. The application will automatically connect to your Google Sheets
 
