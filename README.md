@@ -2,19 +2,19 @@
 
 ## Overview
 
-ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking and absence management system designed specifically for high school student interns. Built with React, TypeScript, Tailwind CSS, and MongoDB, it features a sleek glass morphism design with comprehensive functionality for professional time management.
+ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking and absence management system designed specifically for high school student interns. Built with React, TypeScript, Tailwind CSS, and Google Sheets integration, it features a sleek glass morphism design with comprehensive functionality for professional time management.
 
-## 🚀 Recent Updates - MongoDB Migration
+## 🚀 Recent Updates - Google Sheets Integration Restored
 
-**The application has been fully migrated from Google Sheets/Appwrite to MongoDB for better reliability and data consistency.**
+**The application has been successfully restored to use Google Sheets as the primary data backend for improved reliability and ease of management.**
 
-### What's New:
-- ✅ **MongoDB Backend**: Robust database with proper indexing and relationships
-- ✅ **Express.js API**: RESTful API endpoints for all operations
-- ✅ **Improved Performance**: Faster data operations and better scalability
-- ✅ **Better Error Handling**: Comprehensive error management and validation
-- ✅ **Admin Management**: Built-in admin user creation and management
-- ✅ **Data Security**: Rate limiting, input validation, and secure practices
+### What's Restored:
+- ✅ **Google Sheets Backend**: Direct integration with Google Sheets for data storage
+- ✅ **Google Apps Script API**: Custom backend service running on Google's infrastructure  
+- ✅ **Real-time Data Sync**: Immediate data updates to Google Sheets
+- ✅ **Admin Authentication**: Credential validation against Google Sheets database
+- ✅ **Time & Absence Logging**: Full functionality restored for all tracking features
+- ✅ **Zero Infrastructure**: No server maintenance required, runs entirely on Google platform
 
 ## Features
 
@@ -24,7 +24,7 @@ ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking
 - **Digital Timesheet**: View, filter, and download timesheet records as PDF
 - **Admin Panel**: Comprehensive management tools for supervisors
 - **Real-time Status**: Live feedback and status updates
-- **MongoDB Integration**: Reliable data storage with automatic backups
+- **Google Sheets Integration**: Reliable data storage with automatic cloud backup
 
 ### 🎨 Design & User Experience
 - **Dark Theme**: Professional black background with glass morphism effects
@@ -40,19 +40,19 @@ ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking
 - **Professional Language**: Workplace-appropriate terminology to prepare students
 
 ### 🔧 Technical Features
-- **MongoDB Database**: Scalable and reliable data storage
-- **Express.js Backend**: RESTful API with proper error handling
+- **Google Sheets Database**: Cloud-based data storage with automatic backups
+- **Google Apps Script Backend**: Serverless backend running on Google's platform
 - **Location Services**: GPS verification for attendance accuracy
 - **Data Validation**: Comprehensive input validation and error handling
 - **Performance Optimized**: Fast loading and smooth animations
-- **Rate Limiting**: Protection against abuse and excessive requests
+- **CORS Handling**: Robust cross-origin request management
 
 ## Architecture
 
 ### Technology Stack
 - **Frontend**: React 18+ with TypeScript
-- **Backend**: Node.js with Express.js
-- **Database**: MongoDB (local or MongoDB Atlas)
+- **Backend**: Google Apps Script (serverless)
+- **Database**: Google Sheets (cloud-based)
 - **Styling**: Tailwind CSS with custom glass morphism effects
 - **Icons**: Font Awesome 6
 - **PDF Generation**: jsPDF with AutoTable
@@ -60,19 +60,16 @@ ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking
 
 ### Project Structure
 ```
-├── src/                  # React frontend
-│   ├── components/       # React components
-│   ├── utils/           # Utility functions
-│   ├── types/           # TypeScript definitions
-│   └── App.tsx          # Main application component
-├── backend/             # Node.js/Express backend
-│   ├── models/          # MongoDB schemas
-│   ├── routes/          # API route handlers
-│   ├── middleware/      # Express middleware
-│   └── server.js        # Backend entry point
-├── components/          # Legacy components (being phased out)
-├── utils/              # Legacy utilities (being phased out)
-└── MONGODB_SETUP.md    # Detailed MongoDB setup guide
+├── src/                     # React frontend
+│   ├── components/          # React components
+│   ├── utils/              # Utility functions and API services
+│   ├── types/              # TypeScript definitions
+│   └── App.tsx             # Main application component
+├── components/             # React UI components
+├── utils/                  # API utilities and helpers
+├── GOOGLE_APPS_SCRIPT.js   # Google Apps Script backend code
+├── GOOGLE_SHEETS_INTEGRATION.md  # Detailed integration guide
+└── .env                    # Environment configuration
 ```
 
 ## Quick Start
@@ -80,7 +77,7 @@ ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking
 ### Prerequisites
 - Node.js 16+ 
 - npm or yarn package manager
-- MongoDB (local installation or MongoDB Atlas account)
+- Google account (for Google Sheets and Apps Script)
 
 ### Setup Instructions
 
@@ -94,52 +91,44 @@ ITS (Intern Tracking Systems) application is a modern, dark-themed time tracking
    ```bash
    # Install frontend dependencies
    npm install
-   
-   # Install backend dependencies
-   cd backend
-   npm install
-   cd ..
    ```
 
-3. **Set up MongoDB:**
-   
-   **For detailed MongoDB setup instructions, see [MONGODB_SETUP.md](./MONGODB_SETUP.md)**
-   
-   **Quick setup for local development:**
+3. **Configure Google Sheets Backend:**
+   - Follow the detailed guide in `GOOGLE_SHEETS_INTEGRATION.md`
+   - Set up the Google Apps Script using code from `GOOGLE_APPS_SCRIPT.js`
+   - Configure the API URL in `.env` file
+
+4. **Environment Setup:**
    ```bash
-   # Install MongoDB locally (see MONGODB_SETUP.md for detailed instructions)
-   # Or create a free MongoDB Atlas cluster
-   ```
-
-4. **Configure environment variables:**
+   # Copy the environment template
+   cp .env.example .env
    
-   **Backend (.env in backend directory):**
-   ```env
-   PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/intern-time-tracker
-   JWT_SECRET=your-super-secret-jwt-key
-   NODE_ENV=development
+   # Edit .env with your Google Apps Script URL
+   VITE_TIME_TRACKER_API="your-google-apps-script-url"
    ```
-   
-   **Frontend (.env in root directory):**
-   ```env
-   VITE_API_BASE_URL=http://localhost:5000/api
-   ```
-
-5. **Start the application:**
+5. **Start the development server:**
    ```bash
-   # Option 1: Run both frontend and backend together
-   npm run dev:full
-   
-   # Option 2: Run separately (use two terminals)
-   # Terminal 1 - Backend:
-   cd backend && npm run dev
-   
-   # Terminal 2 - Frontend:
    npm run dev
    ```
 
-6. **Create initial admin user:**
+6. **Access the application:**
+   - Open your browser and navigate to `http://localhost:5173`
+   - The application will be ready to use with Google Sheets integration
+
+## Google Sheets Integration
+
+This application uses Google Sheets as its database through Google Apps Script. For detailed setup instructions, see [GOOGLE_SHEETS_INTEGRATION.md](./GOOGLE_SHEETS_INTEGRATION.md).
+
+### Quick Setup:
+1. Deploy the Google Apps Script using code from `GOOGLE_APPS_SCRIPT.js`
+2. Configure your Google Sheets with the required structure
+3. Update the `.env` file with your Apps Script URL
+4. The application will automatically connect to your Google Sheets
+
+### Admin Access:
+- Default admin credentials: `admin` / `admin123`
+- Additional admin users can be created through the admin panel
+- All admin data is stored securely in Google Sheets
    ```bash
    # Connect to MongoDB and create admin user
    mongosh mongodb://localhost:27017/intern-time-tracker

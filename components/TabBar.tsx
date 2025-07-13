@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tab } from '../types/Tab';
+import { Tab } from '../types';
 
 interface TabBarProps {
   activeTab: Tab;
@@ -19,12 +19,6 @@ const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
       label: 'Report Absence', 
       icon: 'fa-calendar-times',
       description: 'Submit absence requests'
-    },
-    { 
-      id: Tab.Timesheet, 
-      label: 'My Timesheet', 
-      icon: 'fa-file-alt',
-      description: 'View and download records'
     },
     { 
       id: Tab.Help, 

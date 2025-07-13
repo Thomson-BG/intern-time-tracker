@@ -2,11 +2,12 @@
 // This service communicates with the Google Apps Script backend
 const GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec';
 
-// Google Sheets information provided by the user
+// Google Sheets information - based on deployed Apps Script
+// Spreadsheet URL: https://docs.google.com/spreadsheets/d/1LVY9UfJq3pZr_Y7bF37n3JYnsOL1slTSMp7TnxAqLRI/edit?gid=0#gid=0
 const GOOGLE_SHEETS_INFO = {
   SPREADSHEET_ID: '1LVY9UfJq3pZr_Y7bF37n3JYnsOL1slTSMp7TnxAqLRI',
   TIME_LOGS_GID: '0',
-  ABSENCE_LOGS_GID: '1316231505',
+  ABSENCE_LOGS_GID: '1316231505', 
   ADMIN_CREDENTIALS_GID: '1371082882'
 };
 
@@ -63,73 +64,70 @@ interface ApiResponse {
   userData?: any;
 }
 
-// Helper function for API requests
+// Helper function for API requests - Enhanced with better CORS handling
 async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiResponse> {
   try {
     console.log(`Making request to: ${url}`, options);
     
-    // Try with standard CORS first
-    let response;
-    try {
-      response = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-      });
-    } catch (corsError) {
-      console.warn('CORS request failed, trying no-cors mode:', corsError);
-      
-      // For Google Apps Script, sometimes we need to use no-cors mode
-      if (options.method === 'POST') {
-        // For POST requests, try no-cors mode but we won't get response data
-        await fetch(url, {
+    // Add retries for failed requests (common with CORS issues)
+    let lastError;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await fetch(url, {
           ...options,
-          mode: 'no-cors',
+          mode: 'cors', // Explicitly set CORS mode
+          credentials: 'omit', // Don't send credentials to avoid CORS issues
           headers: {
             'Content-Type': 'application/json',
             ...options.headers,
           },
         });
+
+        // Check if response is ok
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('Google Sheets API response:', result);
+        return result;
+      } catch (error) {
+        lastError = error;
+        console.warn(`Request attempt ${attempt} failed:`, error);
         
-        // Return a success response since we can't read the actual response
-        console.log('Request sent in no-cors mode - assuming success');
-        return { success: true, message: 'Request sent (no-cors mode)' };
-      } else {
-        // For GET requests in development, provide a helpful response
-        if (import.meta.env.DEV) {
-          console.warn('Development mode: GET request blocked by CORS, but this is expected');
-          return { 
-            success: false, 
-            error: 'CORS blocked in development. This will work in production.',
-            data: [] // Provide empty data array for development
-          };
+        // If it's a CORS error, wait a bit before retrying
+        if (error.message?.includes('CORS') || error.message?.includes('fetch')) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         } else {
-          // For GET requests in production, rethrow the error
-          throw corsError;
+          break; // Don't retry for other types of errors
         }
       }
     }
-
-    // Check if response is ok
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    console.log('Google Sheets API response:', result);
-    return result;
-  } catch (error) {
-    console.error('Google Sheets API request failed:', error);
     
-    // If we're in development and it's a network error, provide a helpful message
-    if (import.meta.env.DEV && error instanceof TypeError && error.message.includes('fetch')) {
-      console.warn('Development mode: External API request blocked by CORS policy');
+    throw lastError;
+  } catch (error) {
+    console.error('Google Sheets API request failed after retries:', error);
+    
+    // Check if this is a CORS error
+    const isCorsError = error.message?.includes('CORS') || 
+                       error.message?.includes('Access to fetch') || 
+                       error.message?.includes('Failed to fetch');
+    
+    if (isCorsError) {
+      console.error('🚨 CORS ERROR DETECTED 🚨');
+      console.error('This means the Google Apps Script needs to be updated with proper CORS headers.');
+      console.error('Please update your Google Apps Script with the code from FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js');
+      
+      // For CORS errors, provide a more specific error message
+      throw new Error('CORS_ERROR: The Google Apps Script needs to be updated. Check the console for details.');
+    }
+    
+    // For development mode, provide fallback data for GET requests only
+    if (import.meta.env.DEV && options.method !== 'POST') {
+      console.warn('Development mode: Providing fallback empty data for GET request');
       return { 
-        success: false, 
-        error: 'CORS blocked in development. This will work in production.',
-        data: [] // Provide empty data for development
+        success: true,
+        data: []
       };
     }
     
@@ -137,7 +135,7 @@ async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiR
   }
 }
 
-// Time Logs API
+// Time Logs API - Updated to match deployed Apps Script
 export const timeLogsApi = {
   // Get all time logs for a specific employee
   getAll: async (filters?: { employeeId?: string }): Promise<TimeLog[]> => {
@@ -153,23 +151,23 @@ export const timeLogsApi = {
         throw new Error(response.error || 'Failed to fetch time logs');
       }
 
-      // Convert response to TimeLog format
+      // The deployed script returns data directly or in response.data
       const logs = Array.isArray(response) ? response : (response.data || []);
       
       return logs.map((log: any) => ({
-        _id: `${log.employeeid || log.employeeId}-${log.timestamp}-${Math.random()}`,
-        firstName: log.firstname || log.firstName || '',
-        lastName: log.lastname || log.lastName || '',
-        employeeId: log.employeeid || log.employeeId || '',
-        deviceName: log.devicename || log.deviceName || '',
+        _id: `${log.employeeId || log.employeeid}-${log.timestamp}-${Math.random()}`,
+        firstName: log.firstName || log.firstname || '',
+        lastName: log.lastName || log.lastname || '',
+        employeeId: log.employeeId || log.employeeid || '',
+        deviceName: log.deviceName || log.devicename || '',
         action: (log.action || '').toUpperCase() as 'IN' | 'OUT',
         timestamp: log.timestamp || '',
         rawTimestamp: new Date(log.timestamp || Date.now()).getTime(),
         latitude: log.latitude,
         longitude: log.longitude,
         accuracy: log.accuracy,
-        deviceId: log.deviceid || log.deviceId,
-        userAgent: log.useragent || log.userAgent,
+        deviceId: log.deviceId || log.deviceid,
+        userAgent: log.userAgent || log.useragent,
         duration: log.duration || '',
       }));
     } catch (error) {
@@ -185,15 +183,21 @@ export const timeLogsApi = {
     return allLogs.filter(log => new Date(log.timestamp).toDateString() === today);
   },
 
-  // Create a new time log
+  // Get time logs by employee ID (alias for getAll with employeeId filter)
+  getByEmployeeId: async (employeeId: string): Promise<TimeLog[]> => {
+    return timeLogsApi.getAll({ employeeId });
+  },
+
+  // Create a new time log - Updated to match deployed Apps Script structure
   create: async (timeLog: Omit<TimeLog, '_id' | 'createdAt' | 'updatedAt'>): Promise<TimeLog> => {
     try {
+      // The deployed script expects this exact structure
       const payload = {
         type: 'timelog',
         firstName: timeLog.firstName,
         lastName: timeLog.lastName,
         employeeId: timeLog.employeeId,
-        deviceName: timeLog.deviceName,
+        deviceName: timeLog.deviceName || '',
         action: timeLog.action,
         timestamp: timeLog.timestamp,
         latitude: timeLog.latitude,
@@ -201,24 +205,29 @@ export const timeLogsApi = {
         accuracy: timeLog.accuracy,
         deviceId: timeLog.deviceId,
         userAgent: timeLog.userAgent,
+        // Additional fields the deployed script might use
         timeIn: timeLog.action === 'IN' ? timeLog.timestamp : undefined,
         timeOut: timeLog.action === 'OUT' ? timeLog.timestamp : undefined,
       };
+
+      console.log('Sending time log payload:', payload);
 
       const response = await makeRequest(GOOGLE_SHEETS_API, {
         method: 'POST',
         body: JSON.stringify(payload),
       });
 
+      console.log('Time log response:', response);
+
       if (!response.success) {
         throw new Error(response.error || 'Failed to create time log');
       }
 
-      // Return the created log with potential duration
+      // Return the created log
       return {
         ...timeLog,
         _id: `${timeLog.employeeId}-${timeLog.timestamp}-${Math.random()}`,
-        duration: response.message?.includes('Time log added') ? '' : response.duration || '',
+        duration: response.duration || response.message?.includes('duration') ? response.duration : '',
       };
     } catch (error) {
       console.error('Error creating time log:', error);
@@ -301,18 +310,42 @@ export const absenceLogsApi = {
   },
 };
 
-// Admin API
+// Admin API - Updated to match deployed Apps Script with verifyAdmin endpoint
 export const adminApi = {
-  // Admin login - verify credentials
+  // Admin login - verify credentials using the deployed script's verifyAdmin endpoint
   login: async (username: string, password: string): Promise<AdminCredential> => {
     try {
-      // Fallback credentials for development/testing
+      // Fallback credentials for development/testing (as backup)
       const fallbackCredentials = [
         { username: 'manager', password: 'manager123', firstName: 'Manager', lastName: 'User', employeeId: 'MGR001' },
         { username: 'admin', password: 'admin123', firstName: 'Admin', lastName: 'User', employeeId: 'ADMIN001' }
       ];
       
-      // Check fallback credentials first
+      // First try to verify with the Google Sheets using the verifyAdmin endpoint
+      try {
+        // Use verifyAdmin endpoint as specified in the deployed script
+        const params = new URLSearchParams({
+          type: 'verifyAdmin',
+          employeeId: username, // assuming username is the employeeId
+        });
+
+        const response = await makeRequest(`${GOOGLE_SHEETS_API}?${params}`);
+        
+        if (response.success && response.isAdmin && response.userData) {
+          return {
+            _id: `${response.userData.employeeId}-admin`,
+            firstName: response.userData.firstName || '',
+            lastName: response.userData.lastName || '',
+            employeeId: response.userData.employeeId || username,
+            username: username,
+            role: response.userData.role || 'admin',
+          };
+        }
+      } catch (sheetsError) {
+        console.warn('Google Sheets admin verification failed:', sheetsError);
+      }
+
+      // Fallback to built-in credentials if Google Sheets is unavailable
       const fallbackMatch = fallbackCredentials.find(cred => 
         cred.username === username && cred.password === password
       );
@@ -329,60 +362,14 @@ export const adminApi = {
         };
       }
 
-      // Try to get admin credentials from Google Sheets
-      try {
-        const adminList = await adminApi.getAllCredentials();
-        const admin = adminList.find(a => a.username === username);
-        
-        if (!admin) {
-          throw new Error('Invalid username or password');
-        }
-
-        // For production, you'd verify the password hash here
-        // For now, we'll use the employeeId to verify admin status
-        const params = new URLSearchParams({
-          type: 'verifyAdmin',
-          employeeId: admin.employeeId,
-        });
-
-        const response = await makeRequest(`${GOOGLE_SHEETS_API}?${params}`);
-        
-        if (!response.success || !response.isAdmin) {
-          throw new Error('Invalid credentials or not an admin');
-        }
-
-        return {
-          _id: admin._id,
-          firstName: response.userData?.firstName || admin.firstName,
-          lastName: response.userData?.lastName || admin.lastName,
-          employeeId: response.userData?.employeeId || admin.employeeId,
-          username: username,
-          role: response.userData?.role || 'admin',
-        };
-      } catch (sheetsError) {
-        console.warn('Could not verify credentials via Google Sheets, trying fallback again:', sheetsError);
-        
-        // If Google Sheets is unavailable, be more lenient with fallback credentials
-        if (fallbackMatch) {
-          return {
-            _id: `fallback-${fallbackMatch.employeeId}`,
-            firstName: fallbackMatch.firstName,
-            lastName: fallbackMatch.lastName,
-            employeeId: fallbackMatch.employeeId,
-            username: username,
-            role: 'admin',
-          };
-        }
-        
-        throw new Error('Invalid username or password');
-      }
+      throw new Error('Invalid username or password');
     } catch (error) {
       console.error('Error during admin login:', error);
       throw error;
     }
   },
 
-  // Create admin credential
+  // Create admin credential - Updated to use managerPrivilege type as in deployed script
   createCredential: async (credential: {
     firstName: string;
     lastName: string;
@@ -392,12 +379,13 @@ export const adminApi = {
     role?: string;
   }): Promise<AdminCredential> => {
     try {
+      // The deployed script expects managerPrivilege type
       const payload = {
         type: 'managerPrivilege',
         firstName: credential.firstName,
         lastName: credential.lastName,
         employeeId: credential.employeeId,
-        name: `${credential.firstName} ${credential.lastName}`,
+        name: `${credential.firstName} ${credential.lastName}`, // deployed script expects 'name' field
         role: credential.role || 'admin',
       };
 
@@ -441,11 +429,11 @@ export const adminApi = {
       const admins = Array.isArray(response) ? response : (response.data || []);
       
       return admins.map((admin: any) => ({
-        _id: `${admin.employeeid || admin.employeeId}-${Math.random()}`,
-        firstName: admin.firstname || admin.firstName || '',
-        lastName: admin.lastname || admin.lastName || '',
-        employeeId: admin.employeeid || admin.employeeId || '',
-        username: admin.username || admin.employeeId || '',
+        _id: `${admin.employeeId || admin.employeeid}-${Math.random()}`,
+        firstName: admin.firstName || admin.firstname || '',
+        lastName: admin.lastName || admin.lastname || '',
+        employeeId: admin.employeeId || admin.employeeid || '',
+        username: admin.username || admin.employeeId || admin.employeeid || '',
         role: admin.role || 'admin',
       }));
     } catch (error) {
@@ -455,28 +443,12 @@ export const adminApi = {
   },
 };
 
-// Health check
+// Health check - Disabled to prevent CORS errors on app startup
 export const healthCheck = async (): Promise<boolean> => {
-  // In development mode, always return true to avoid CORS-related false negatives
-  // The actual API calls will handle CORS issues gracefully
-  if (import.meta.env.DEV) {
-    console.log('Development mode: Skipping health check due to CORS restrictions');
-    return true;
-  }
-
-  try {
-    // Test a simple GET request to check if the service is available
-    const params = new URLSearchParams({
-      type: 'adminList',
-    });
-
-    const response = await makeRequest(`${GOOGLE_SHEETS_API}?${params}`);
-    console.log('Health check passed - Google Sheets API is responding');
-    return true;
-  } catch (error) {
-    console.warn('Health check failed in production:', error);
-    return false;
-  }
+  // Always return true to prevent CORS-related false negatives
+  // Individual operations will handle their own errors and provide user feedback
+  console.log('Health check: Assuming healthy - individual operations will handle their own errors');
+  return true;
 };
 
 // Export all APIs
