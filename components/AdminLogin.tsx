@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import mongoApi from '../utils/mongoApi';
+import googleSheetsApi from '../utils/googleSheetsApi';
 
 interface AdminLoginProps {
   onLogin: (success: boolean, userRole?: 'admin' | 'manager', currentUser?: { employeeId: string; firstName: string; lastName: string }) => void;
@@ -20,9 +20,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onLoginSuccess, onLogi
     setIsLoading(true);
 
     try {
-      // Check against MongoDB admin credentials
+      // Check against Google Sheets admin credentials
       try {
-        const adminData = await mongoApi.admin.login(username, password);
+        const adminData = await googleSheetsApi.admin.login(username, password);
         onLogin(true, adminData.role as 'admin' | 'manager', {
           employeeId: adminData.employeeId,
           firstName: adminData.firstName,
@@ -32,7 +32,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onLoginSuccess, onLogi
         setError('');
         return;
       } catch (loginError) {
-        console.error('MongoDB login failed:', loginError);
+        console.error('Google Sheets login failed:', loginError);
         // Continue with fallback checks
       }
 
