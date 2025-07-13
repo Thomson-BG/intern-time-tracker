@@ -27,7 +27,7 @@ interface AbsenceData {
   type: string;
 }
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec";
 
 // Generate a unique device ID and store it in localStorage
 const getDeviceId = (): string => {

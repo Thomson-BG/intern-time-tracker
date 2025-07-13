@@ -81,7 +81,7 @@ function doPost(e) {
 
 ### How to Apply the Fix
 
-1. **Open Google Apps Script**: Go to https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec
+1. **Open Google Apps Script**: Go to https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec
 2. **Access the Script Editor**: Click on the script URL and then "Edit" 
 3. **Replace the doPost function**: Replace the existing doPost function with the corrected version from `CORRECTED_GOOGLE_APPS_SCRIPT.js`
 4. **Save and Deploy**: Save the changes and redeploy the web app

@@ -10,7 +10,7 @@
  * 4. Better error handling and logging
  * 
  * DEPLOYMENT INSTRUCTIONS:
- * 1. Go to: https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec
+ * 1. Go to: https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec
  * 2. Replace ALL existing code with this script
  * 3. Save and deploy as web app with "Execute as: Me" and "Who has access: Anyone"
  * 
