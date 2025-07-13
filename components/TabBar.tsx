@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tab } from '../types/Tab';
+import { Tab } from '../types';
 
 interface TabBarProps {
   activeTab: Tab;

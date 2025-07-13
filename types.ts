@@ -2,6 +2,7 @@ export enum Tab {
   Time = 'Time',
   Absence = 'Absence',
   Timesheet = 'Timesheet',
+  Help = 'Help',
 }
 
 export interface UserInfo {
