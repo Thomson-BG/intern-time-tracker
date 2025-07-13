@@ -66,8 +66,34 @@ const App: React.FC = () => {
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [location, setLocation] = useState<LocationState>({ status: 'Location will be captured on check-in/out.' });
     const [backendHealthy, setBackendHealthy] = useState<boolean | null>(null);
+    const [isCheckedIn, setIsCheckedIn] = useState(false);
 
     const clearStatus = () => setTimeout(() => setStatus(null), 5000);
+
+    // Function to check current check-in status
+    const checkCurrentStatus = useCallback(async () => {
+        if (!userInfo.employeeId) return;
+        
+        try {
+            const logs = await timeLogsApi.getByEmployeeId(userInfo.employeeId);
+            if (logs && logs.length > 0) {
+                // Sort logs by timestamp to get the most recent
+                const sortedLogs = logs.sort((a, b) => (b.rawTimestamp || 0) - (a.rawTimestamp || 0));
+                const latestLog = sortedLogs[0];
+                setIsCheckedIn(latestLog.action === 'IN');
+            } else {
+                setIsCheckedIn(false);
+            }
+        } catch (error) {
+            console.warn('Could not check current status:', error);
+            setIsCheckedIn(false);
+        }
+    }, [userInfo.employeeId]);
+
+    // Check status when component mounts or employeeId changes
+    useEffect(() => {
+        checkCurrentStatus();
+    }, [checkCurrentStatus]);
 
     // Check backend health on component mount
     useEffect(() => {
@@ -98,21 +124,9 @@ const App: React.FC = () => {
 
         setIsLogging(true);
         
-        // Check if today is allowed for check-in/out (Monday-Thursday only)
-        const now = new Date();
-        const day = now.getDay();
-        if ([0, 5, 6].includes(day)) { // Sun, Fri, Sat
-            setStatus({ 
-                type: 'error', 
-                title: 'Not Allowed', 
-                details: 'Check-in and check-out are only allowed Monday-Thursday.' 
-            });
-            setIsLogging(false);
-            clearStatus();
-            return;
-        }
-        
         setStatus({ type: 'info', title: 'Processing...', details: 'Acquiring your location. Please wait.' });
+
+        const now = new Date();
 
         try {
             let position;
@@ -157,6 +171,9 @@ const App: React.FC = () => {
             };
 
             const savedLog = await timeLogsApi.create(newTimeLog);
+            
+            // Update the checked-in status
+            setIsCheckedIn(action === 'IN');
             
             let durationDetails = "";
             if (savedLog.duration) {
@@ -301,6 +318,7 @@ const App: React.FC = () => {
                                         onLogAction={handleLogAction} 
                                         location={location}
                                         isLogging={isLogging}
+                                        isCheckedIn={isCheckedIn}
                                     />
                                 )}
                                 {activeTab === Tab.Absence && (

@@ -159,6 +159,11 @@ export const timeLogsApi = {
     return allLogs.filter(log => new Date(log.timestamp).toDateString() === today);
   },
 
+  // Get time logs by employee ID (alias for getAll with employeeId filter)
+  getByEmployeeId: async (employeeId: string): Promise<TimeLog[]> => {
+    return timeLogsApi.getAll({ employeeId });
+  },
+
   // Create a new time log - Updated to match deployed Apps Script structure
   create: async (timeLog: Omit<TimeLog, '_id' | 'createdAt' | 'updatedAt'>): Promise<TimeLog> => {
     try {
