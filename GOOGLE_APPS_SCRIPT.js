@@ -17,11 +17,11 @@
  * 6. Copy the web app URL to your frontend .env file as VITE_TIME_TRACKER_API
  */
 
-// Configuration - Replace these with your actual Google Sheets IDs
+// Configuration - Using the provided Google Sheets ID with different GIDs for each sheet
 const SPREADSHEET_IDS = {
-  TIME_LOGS: 'your-time-logs-spreadsheet-id',
-  ABSENCE_LOGS: 'your-absence-logs-spreadsheet-id', 
-  ADMIN_USERS: 'your-admin-users-spreadsheet-id'
+  TIME_LOGS: '1LVY9UfJq3pZr_Y7bF37n3JYnsOL1slTSMp7TnxAqLRI',
+  ABSENCE_LOGS: '1LVY9UfJq3pZr_Y7bF37n3JYnsOL1slTSMp7TnxAqLRI', 
+  ADMIN_USERS: '1LVY9UfJq3pZr_Y7bF37n3JYnsOL1slTSMp7TnxAqLRI'
 };
 
 // Sheet names within each spreadsheet
