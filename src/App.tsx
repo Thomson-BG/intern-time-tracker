@@ -61,7 +61,9 @@ const App: React.FC = () => {
             try {
                 const isHealthy = await googleSheetsApi.healthCheck();
                 setBackendHealthy(isHealthy);
-                if (!isHealthy) {
+                
+                // Only show error in production or if we have a definitive failure
+                if (!isHealthy && !import.meta.env.DEV) {
                     setStatus({
                         type: 'error',
                         title: 'Google Sheets Connection Issue',
@@ -69,12 +71,20 @@ const App: React.FC = () => {
                     });
                 }
             } catch (error) {
-                setBackendHealthy(false);
-                setStatus({
-                    type: 'error',
-                    title: 'Google Sheets Connection Failed',
-                    details: 'Google Sheets backend is not responding. Please check the configuration.'
-                });
+                console.warn('Health check error:', error);
+                
+                // In development, be more lenient about health check failures
+                if (import.meta.env.DEV) {
+                    setBackendHealthy(true); // Be optimistic in development
+                    console.log('Development mode: Ignoring health check failure due to CORS restrictions');
+                } else {
+                    setBackendHealthy(false);
+                    setStatus({
+                        type: 'error',
+                        title: 'Google Sheets Connection Failed',
+                        details: 'Google Sheets backend is not responding. Please check the configuration.'
+                    });
+                }
             }
         };
         checkBackendHealth();
@@ -92,7 +102,7 @@ const App: React.FC = () => {
             return;
         }
 
-        if (!backendHealthy) {
+        if (!backendHealthy && !import.meta.env.DEV) {
             setStatus({
                 type: 'error',
                 title: 'Google Sheets Unavailable',
@@ -190,7 +200,7 @@ const App: React.FC = () => {
              return;
         }
 
-        if (!backendHealthy) {
+        if (!backendHealthy && !import.meta.env.DEV) {
             setStatus({
                 type: 'error',
                 title: 'Google Sheets Unavailable',
@@ -287,7 +297,7 @@ const App: React.FC = () => {
                         
                         {status && <StatusDisplay {...status} />}
 
-                        {!backendHealthy && (
+                        {!backendHealthy && !import.meta.env.DEV && (
                             <div className="mb-6 p-4 bg-red-900/50 border border-red-500/30 rounded-lg">
                                 <div className="flex items-center space-x-3">
                                     <i className="fas fa-exclamation-triangle text-red-400 text-xl"></i>

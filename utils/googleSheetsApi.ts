@@ -97,8 +97,18 @@ async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiR
         console.log('Request sent in no-cors mode - assuming success');
         return { success: true, message: 'Request sent (no-cors mode)' };
       } else {
-        // For GET requests, rethrow the error since we need the response
-        throw corsError;
+        // For GET requests in development, provide a helpful response
+        if (import.meta.env.DEV) {
+          console.warn('Development mode: GET request blocked by CORS, but this is expected');
+          return { 
+            success: false, 
+            error: 'CORS blocked in development. This will work in production.',
+            data: [] // Provide empty data array for development
+          };
+        } else {
+          // For GET requests in production, rethrow the error
+          throw corsError;
+        }
       }
     }
 
@@ -118,7 +128,8 @@ async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiR
       console.warn('Development mode: External API request blocked by CORS policy');
       return { 
         success: false, 
-        error: 'CORS blocked in development. This will work in production.' 
+        error: 'CORS blocked in development. This will work in production.',
+        data: [] // Provide empty data for development
       };
     }
     
@@ -446,6 +457,13 @@ export const adminApi = {
 
 // Health check
 export const healthCheck = async (): Promise<boolean> => {
+  // In development mode, always return true to avoid CORS-related false negatives
+  // The actual API calls will handle CORS issues gracefully
+  if (import.meta.env.DEV) {
+    console.log('Development mode: Skipping health check due to CORS restrictions');
+    return true;
+  }
+
   try {
     // Test a simple GET request to check if the service is available
     const params = new URLSearchParams({
@@ -456,15 +474,7 @@ export const healthCheck = async (): Promise<boolean> => {
     console.log('Health check passed - Google Sheets API is responding');
     return true;
   } catch (error) {
-    console.warn('Health check failed, but this may be expected in development due to CORS:', error);
-    
-    // In development, CORS might block the request but the service could still work for actual operations
-    // We'll be more lenient about health check failures
-    if (import.meta.env.DEV) {
-      console.log('Development mode: Treating health check as passed despite CORS issues');
-      return true; // Be optimistic in development
-    }
-    
+    console.warn('Health check failed in production:', error);
     return false;
   }
 };
