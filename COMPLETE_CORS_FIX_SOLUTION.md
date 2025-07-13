@@ -11,7 +11,7 @@ Access to fetch at 'https://script.google.com/macros/s/AKfyc...' from origin 'ht
 ## 🔧 COMPLETE FIX - Follow These Exact Steps
 
 ### Step 1: Update Google Apps Script
-1. Go to your Google Apps Script: https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec
+1. Go to your Google Apps Script: https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec
 2. Click "Open in Script Editor" or navigate to the script project
 3. **DELETE ALL EXISTING CODE** in the script editor
 4. **COPY THE ENTIRE CONTENTS** of `FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js` from this repository

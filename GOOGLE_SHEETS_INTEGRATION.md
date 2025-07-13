@@ -46,7 +46,7 @@ The application uses the following environment variable in `.env`:
 
 ```env
 # Google Sheets API Configuration (Restored)
-VITE_TIME_TRACKER_API="https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec"
+VITE_TIME_TRACKER_API="https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec"
 ```
 
 ### Google Sheets Setup

@@ -6,7 +6,7 @@
  * 
  * IMPORTANT: Replace the existing Google Apps Script code with this corrected version.
  * 
- * Apps Script URL: https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec
+ * Apps Script URL: https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec
  * Google Sheets ID: 1LVY9UfJq3pZr_Y7bF37n3JYnsOL1slTSMp7TnxAqLRI
  */
 

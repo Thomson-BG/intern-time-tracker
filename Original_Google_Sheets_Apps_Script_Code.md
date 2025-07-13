@@ -4,7 +4,7 @@ This document contains the complete history of the Google Sheets Apps Script cod
 
 ## CORRECTED Production Code (Version 1.1) - CORS ISSUES FIXED
 
-**Apps Script URL:** https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec
+**Apps Script URL:** https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec
 
 **Google Sheets ID:** 1LVY9UfJq3pZr_Y7bF37n3JYnsOL1slTSMp7TnxAqLRI
 
@@ -708,7 +708,7 @@ function setupInitialAdmin() {
 
 **Production Google Sheets URL:** https://docs.google.com/spreadsheets/d/1LVY9UfJq3pZr_Y7bF37n3JYnsOL1slTSMp7TnxAqLRI/edit?gid=0#gid=0
 
-**Apps Script Deployment URL:** https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec
+**Apps Script Deployment URL:** https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec
 
 ## Version History
 
