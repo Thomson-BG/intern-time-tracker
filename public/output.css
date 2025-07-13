@@ -613,6 +613,10 @@ body {
   position: relative;
 }
 
+.inset-0{
+  inset: 0px;
+}
+
 .bottom-full{
   bottom: 100%;
 }
@@ -772,6 +776,10 @@ body {
 
 .h-8{
   height: 2rem;
+}
+
+.h-full{
+  height: 100%;
 }
 
 .min-h-screen{
@@ -1087,6 +1095,10 @@ body {
 
 .bg-black\/30{
   background-color: rgb(0 0 0 / 0.3);
+}
+
+.bg-black\/50{
+  background-color: rgb(0 0 0 / 0.5);
 }
 
 .bg-blue-500\/20{
@@ -1541,6 +1553,10 @@ body {
 
 .duration-200{
   transition-duration: 200ms;
+}
+
+.duration-300{
+  transition-duration: 300ms;
 }
 
 @keyframes slide-in {
