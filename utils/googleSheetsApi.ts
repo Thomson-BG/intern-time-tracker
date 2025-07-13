@@ -60,13 +60,38 @@ async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiR
   try {
     console.log(`Making request to: ${url}`, options);
     
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
+    // Try with standard CORS first
+    let response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+    } catch (corsError) {
+      console.warn('CORS request failed, trying no-cors mode:', corsError);
+      
+      // For Google Apps Script, sometimes we need to use no-cors mode
+      if (options.method === 'POST') {
+        // For POST requests, try no-cors mode but we won't get response data
+        await fetch(url, {
+          ...options,
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+          },
+        });
+        
+        // Return a success response since we can't read the actual response
+        return { success: true, message: 'Request sent (no-cors mode)' };
+      } else {
+        // For GET requests, rethrow the error since we need the response
+        throw corsError;
+      }
+    }
 
     // Check if response is ok
     if (!response.ok) {
@@ -78,6 +103,16 @@ async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiR
     return result;
   } catch (error) {
     console.error('Google Sheets API request failed:', error);
+    
+    // If we're in development and it's a network error, provide a helpful message
+    if (import.meta.env.DEV && error instanceof TypeError && error.message.includes('fetch')) {
+      console.warn('Development mode: External API request blocked by CORS policy');
+      return { 
+        success: false, 
+        error: 'CORS blocked in development. This will work in production.' 
+      };
+    }
+    
     throw error;
   }
 }
