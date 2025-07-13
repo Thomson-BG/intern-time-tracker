@@ -23,7 +23,8 @@
       "@/*":           ["*"],
       "@components/*": ["components/*"],
       "@utils/*":      ["utils/*"]
-    }
+    },
+    "types": ["vite/client"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "components/**/*.ts*", "utils/**/*.ts*"],
   "exclude": ["node_modules", "dist"]
