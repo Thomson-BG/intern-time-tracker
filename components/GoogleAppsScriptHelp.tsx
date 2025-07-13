@@ -22,15 +22,11 @@ const GoogleAppsScriptHelp: React.FC<GoogleAppsScriptHelpProps> = ({ onDismiss }
               The check-in/check-out functionality is not working because the Google Apps Script needs to be updated with proper CORS headers.
             </p>
             
-            <div className="bg-gray-800/50 rounded-xl p-4 mb-4">
-              <h4 className="text-white font-semibold mb-2">Quick Fix Steps:</h4>
-              <ol className="list-decimal list-inside space-y-2 text-gray-300 text-sm">
-                <li>Go to <a href="https://script.google.com/home" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">Google Apps Script</a></li>
-                <li>Find or create your time tracker project</li>
-                <li>Replace ALL code with the content from <code className="bg-gray-700 px-1 rounded">FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js</code></li>
-                <li>Save and deploy as web app with "Execute as: Me" and "Who has access: Anyone"</li>
-                <li>Refresh this page after deployment</li>
-              </ol>
+            <div className="bg-red-800/50 rounded-xl p-4 mb-4 border border-red-500/30">
+              <h4 className="text-red-300 font-semibold mb-2">📢 Action Required:</h4>
+              <p className="text-red-200 text-sm">
+                Please notify your Teacher of this error <strong>[ERROR: 1A]</strong>
+              </p>
             </div>
 
             <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 mb-4">
@@ -47,21 +43,13 @@ const GoogleAppsScriptHelp: React.FC<GoogleAppsScriptHelpProps> = ({ onDismiss }
               </p>
             </div>
 
-            <div className="flex gap-3">
-              <a 
-                href="https://script.google.com/home" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-4 rounded-xl font-medium transition-colors"
-              >
-                Open Google Apps Script
-              </a>
+            <div className="flex justify-end">
               {onDismiss && (
                 <button 
                   onClick={onDismiss}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-xl font-medium transition-colors"
+                  className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-xl font-medium transition-colors"
                 >
-                  I'll Fix This Later
+                  I'll Report This Later
                 </button>
               )}
             </div>
