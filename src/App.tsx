@@ -12,8 +12,8 @@ import StatusDisplay from '../components/StatusDisplay';
 import StudentHelpPanel from '../components/StudentHelpPanel';
 import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
 
-// Import Google Sheets API services
-import googleSheetsApi, { timeLogsApi, absenceLogsApi, adminApi, TimeLog, AbsenceLog } from '../utils/googleSheetsApi';
+// Import MongoDB/File-based API services (more reliable than Google Sheets)
+import mongoApi, { timeLogsApi, absenceLogsApi, adminApi, TimeLog, AbsenceLog } from '../utils/mongoApi';
 
 // Helper functions
 const getDeviceId = async () => {
@@ -59,32 +59,24 @@ const App: React.FC = () => {
     useEffect(() => {
         const checkBackendHealth = async () => {
             try {
-                const isHealthy = await googleSheetsApi.healthCheck();
+                const isHealthy = await mongoApi.healthCheck();
                 setBackendHealthy(isHealthy);
                 
-                // Only show error in production or if we have a definitive failure
-                if (!isHealthy && !import.meta.env.DEV) {
+                if (!isHealthy) {
                     setStatus({
                         type: 'error',
-                        title: 'Google Sheets Connection Issue',
-                        details: 'Cannot connect to the Google Sheets backend. Please check the API configuration.'
+                        title: 'Backend Connection Issue',
+                        details: 'Cannot connect to the backend API. Please check if the server is running.'
                     });
                 }
             } catch (error) {
                 console.warn('Health check error:', error);
-                
-                // In development, be more lenient about health check failures
-                if (import.meta.env.DEV) {
-                    setBackendHealthy(true); // Be optimistic in development
-                    console.log('Development mode: Ignoring health check failure due to CORS restrictions');
-                } else {
-                    setBackendHealthy(false);
-                    setStatus({
-                        type: 'error',
-                        title: 'Google Sheets Connection Failed',
-                        details: 'Google Sheets backend is not responding. Please check the configuration.'
-                    });
-                }
+                setBackendHealthy(false);
+                setStatus({
+                    type: 'error',
+                    title: 'Backend Connection Failed',
+                    details: 'Backend server is not responding. Please check the configuration.'
+                });
             }
         };
         checkBackendHealth();

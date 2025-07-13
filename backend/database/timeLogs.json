@@ -37,5 +37,43 @@
     "rawTimestamp": 1752361231375,
     "createdAt": "2025-07-12T23:00:31.376Z",
     "updatedAt": "2025-07-12T23:00:31.376Z"
+  },
+  {
+    "_id": "md137whofen8luwewrm",
+    "firstName": "Test",
+    "lastName": "User",
+    "employeeId": "TEST001",
+    "action": "IN",
+    "timestamp": "07/13/2025 10:59:00 AM",
+    "rawTimestamp": 1752378000000,
+    "createdAt": "2025-07-13T03:00:54.204Z",
+    "updatedAt": "2025-07-13T03:00:54.204Z"
+  },
+  {
+    "_id": "md13anqk4bsqmphwlz9",
+    "firstName": "Integration",
+    "lastName": "Test",
+    "employeeId": "INT001",
+    "action": "IN",
+    "timestamp": "07/13/2025 11:30:00 AM",
+    "rawTimestamp": 1752380250000,
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "createdAt": "2025-07-13T03:03:02.828Z",
+    "updatedAt": "2025-07-13T03:03:02.828Z"
+  },
+  {
+    "_id": "md13aoipptq0bsfxawq",
+    "firstName": "Integration",
+    "lastName": "Test",
+    "employeeId": "INT001",
+    "action": "OUT",
+    "timestamp": "07/13/2025 03:30:00 PM",
+    "rawTimestamp": 1752394800000,
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "duration": "4 hours, 2 minutes",
+    "createdAt": "2025-07-13T03:03:03.841Z",
+    "updatedAt": "2025-07-13T03:03:03.841Z"
   }
 ]

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { timeLogsApi, TimeLog } from '../utils/googleSheetsApi';
+import { timeLogsApi, TimeLog } from '../utils/mongoApi';
 import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
 import { UserInfo } from '../types';
 
