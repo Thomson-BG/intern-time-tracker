@@ -64,7 +64,7 @@ interface ApiResponse {
   userData?: any;
 }
 
-// Helper function for API requests - Updated to match deployed Apps Script
+// Helper function for API requests - Simplified and more robust
 async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiResponse> {
   try {
     console.log(`Making request to: ${url}`, options);
@@ -88,23 +88,17 @@ async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiR
   } catch (error) {
     console.error('Google Sheets API request failed:', error);
     
-    // If we're in development and it's a CORS error, provide mock data
-    if (import.meta.env.DEV && error instanceof TypeError && error.message.includes('fetch')) {
-      console.warn('Development mode: External API request blocked by CORS policy');
+    // In development mode, provide helpful error messages but don't mask real issues
+    if (import.meta.env.DEV) {
+      console.warn('Development mode: API request failed. In production, ensure the Google Apps Script has proper CORS headers.');
       
-      // For POST requests, assume success
-      if (options.method === 'POST') {
+      // Only return mock data for GET requests, not POST (to avoid masking real issues)
+      if (options.method !== 'POST') {
         return { 
-          success: true, 
-          message: 'Mock success in development mode - request would work in production'
+          success: true,
+          data: []
         };
       }
-      
-      // For GET requests, return empty data
-      return { 
-        success: true,
-        data: []
-      };
     }
     
     throw error;

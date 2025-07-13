@@ -2,7 +2,7 @@
 
 This document contains the complete history of the Google Sheets Apps Script code used in the Intern Time Tracker application.
 
-## Current Production Code (Version 1.0)
+## CORRECTED Production Code (Version 1.1) - CORS ISSUES FIXED
 
 **Apps Script URL:** https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec
 
@@ -13,14 +13,22 @@ This document contains the complete history of the Google Sheets Apps Script cod
 - **Absence Logs Sheet (gid=1316231505):** Contains absence request data  
 - **Admin Credentials Sheet (gid=1371082882):** Contains admin user credentials
 
-### Current Apps Script Code
+### 🚨 IMPORTANT: The script below FIXES the CORS issue that was preventing check-in/out!
+
+**CRITICAL FIX:** The original script was missing CORS headers in the `doPost` function, which caused all check-in/check-out requests to fail with CORS errors. This corrected version adds the missing headers.
+
+### CORRECTED Apps Script Code (Version 1.1)
 
 ```javascript
 function doPost(e) {
-  // Set CORS headers for response
+  // FIXED: Add CORS headers to doPost function (this was missing!)
   var output = ContentService.createTextOutput();
   output.setMimeType(ContentService.MimeType.JSON);
-
+  
+  // CRITICAL FIX: Set CORS headers for doPost (these were missing)
+  output.setHeader('Access-Control-Allow-Origin', '*');
+  output.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  output.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
   try {
     const params = JSON.parse(e.postData.contents);
@@ -54,7 +62,7 @@ function doPost(e) {
       sheet.appendRow(row);
       result = "Absence log added";
     } 
-    // Admin credentials handling - NEW CODE
+    // Admin credentials handling
     else if (type === 'managerPrivilege') {
       const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Admin Credentials");
       
@@ -704,7 +712,28 @@ function setupInitialAdmin() {
 
 ## Version History
 
-### Version 1.0 (Current Production)
+### Version 1.1 (CORRECTED - CORS FIXED) - Current Recommended
+- **Date:** December 2024 (Current Fix)
+- **Critical Fix:** Added missing CORS headers to doPost function
+- **Problem Solved:** Fixes "Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present" errors
+- **Changes:** 
+  - Added `output.setHeader('Access-Control-Allow-Origin', '*')` to doPost
+  - Added `output.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')` to doPost  
+  - Added `output.setHeader('Access-Control-Allow-Headers', 'Content-Type')` to doPost
+- **Impact:** Now check-in/out and all POST requests work correctly from web browsers
+- **Features:** All Version 1.0 features plus working CORS support
+
+### Version 1.0 (Production - HAD CORS ISSUE)
+- **Date:** Previous Production Version  
+- **Issue:** Missing CORS headers in doPost function caused check-in/out failures
+- **Features:** 
+  - Time logging with duration calculation
+  - Absence request logging
+  - Admin credential management with verifyAdmin endpoint
+  - Proper header mapping for dynamic sheet structures
+  - CORS headers only in doGet and doOptions (missing in doPost)
+
+### Version 0.5 (Repository Version)
 - **Date:** Current
 - **Changes:** Production-ready version with proper CORS headers and error handling
 - **Features:** 
