@@ -104,8 +104,6 @@ const App: React.FC = () => {
         setIsLogging(true);
         
         // Check if today is allowed for check-in/out (Monday-Thursday only)
-        // Temporarily commented out for testing purposes
-        /*
         const now = new Date();
         const day = now.getDay();
         if ([0, 5, 6].includes(day)) { // Sun, Fri, Sat
@@ -118,7 +116,6 @@ const App: React.FC = () => {
             clearStatus();
             return;
         }
-        */
         
         setStatus({ type: 'info', title: 'Processing...', details: 'Acquiring your location. Please wait.' });
 
