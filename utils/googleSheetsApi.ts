@@ -64,41 +64,71 @@ interface ApiResponse {
   userData?: any;
 }
 
-// Helper function for API requests - Simplified and more robust
+// Helper function for API requests - Enhanced with better CORS handling
 async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiResponse> {
   try {
     console.log(`Making request to: ${url}`, options);
     
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
+    // Add retries for failed requests (common with CORS issues)
+    let lastError;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          mode: 'cors', // Explicitly set CORS mode
+          credentials: 'omit', // Don't send credentials to avoid CORS issues
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+          },
+        });
 
-    // Check if response is ok
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
+        // Check if response is ok
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
-    const result = await response.json();
-    console.log('Google Sheets API response:', result);
-    return result;
-  } catch (error) {
-    console.error('Google Sheets API request failed:', error);
-    
-    // In development mode, provide helpful error messages but don't mask real issues
-    if (import.meta.env.DEV) {
-      console.warn('Development mode: API request failed. In production, ensure the Google Apps Script has proper CORS headers.');
-      
-      // Only return mock data for GET requests, not POST (to avoid masking real issues)
-      if (options.method !== 'POST') {
-        return { 
-          success: true,
-          data: []
-        };
+        const result = await response.json();
+        console.log('Google Sheets API response:', result);
+        return result;
+      } catch (error) {
+        lastError = error;
+        console.warn(`Request attempt ${attempt} failed:`, error);
+        
+        // If it's a CORS error, wait a bit before retrying
+        if (error.message?.includes('CORS') || error.message?.includes('fetch')) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        } else {
+          break; // Don't retry for other types of errors
+        }
       }
+    }
+    
+    throw lastError;
+  } catch (error) {
+    console.error('Google Sheets API request failed after retries:', error);
+    
+    // Check if this is a CORS error
+    const isCorsError = error.message?.includes('CORS') || 
+                       error.message?.includes('Access to fetch') || 
+                       error.message?.includes('Failed to fetch');
+    
+    if (isCorsError) {
+      console.error('🚨 CORS ERROR DETECTED 🚨');
+      console.error('This means the Google Apps Script needs to be updated with proper CORS headers.');
+      console.error('Please update your Google Apps Script with the code from FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js');
+      
+      // For CORS errors, provide a more specific error message
+      throw new Error('CORS_ERROR: The Google Apps Script needs to be updated. Check the console for details.');
+    }
+    
+    // For development mode, provide fallback data for GET requests only
+    if (import.meta.env.DEV && options.method !== 'POST') {
+      console.warn('Development mode: Providing fallback empty data for GET request');
+      return { 
+        success: true,
+        data: []
+      };
     }
     
     throw error;
@@ -413,28 +443,12 @@ export const adminApi = {
   },
 };
 
-// Health check - Updated to be more permissive and avoid false errors
+// Health check - Disabled to prevent CORS errors on app startup
 export const healthCheck = async (): Promise<boolean> => {
-  // In development mode, always return true to avoid CORS-related false negatives
-  if (import.meta.env.DEV) {
-    console.log('Development mode: Health check assumed healthy');
-    return true;
-  }
-
-  try {
-    // Test a simple GET request to check if the service is available
-    const params = new URLSearchParams({
-      type: 'adminList',
-    });
-
-    const response = await makeRequest(`${GOOGLE_SHEETS_API}?${params}`);
-    console.log('Health check passed - Google Sheets API is responding');
-    return true;
-  } catch (error) {
-    console.warn('Health check failed in production:', error);
-    // Return true anyway to avoid blocking the application - let individual operations handle their own errors
-    return true;
-  }
+  // Always return true to prevent CORS-related false negatives
+  // Individual operations will handle their own errors and provide user feedback
+  console.log('Health check: Assuming healthy - individual operations will handle their own errors');
+  return true;
 };
 
 // Export all APIs

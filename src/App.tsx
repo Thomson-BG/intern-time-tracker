@@ -86,7 +86,19 @@ const App: React.FC = () => {
             }
         } catch (error) {
             console.warn('Could not check current status:', error);
-            setIsCheckedIn(false);
+            
+            // Handle CORS errors specifically
+            if (error.message?.includes('CORS_ERROR')) {
+                setStatus({ 
+                    type: 'error', 
+                    title: 'Google Apps Script Update Required', 
+                    details: 'The Google Apps Script needs to be updated with proper CORS headers. Please update the script and redeploy it.' 
+                });
+                clearStatus();
+            }
+            
+            // Don't change checked-in status if we can't verify it
+            // This prevents the UI from being unusable due to CORS errors
         }
     }, [userInfo.employeeId]);
 
@@ -189,12 +201,23 @@ const App: React.FC = () => {
 
         } catch (error: any) {
             const errorMessage = error.message || 'An unknown error occurred.';
-            setLocation({ status: `Error: ${errorMessage}`, error: errorMessage });
-            setStatus({ 
-                type: 'error', 
-                title: 'Operation Failed', 
-                details: `Could not record log: ${errorMessage}. Please enable location services.` 
-            });
+            console.error('Error during log action:', error);
+            
+            // Handle CORS errors specifically
+            if (errorMessage.includes('CORS_ERROR')) {
+                setStatus({ 
+                    type: 'error', 
+                    title: 'Google Apps Script Update Required', 
+                    details: 'The Google Apps Script needs to be updated with proper CORS headers. Please check the FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js file and update your script.' 
+                });
+            } else {
+                setLocation({ status: `Error: ${errorMessage}`, error: errorMessage });
+                setStatus({ 
+                    type: 'error', 
+                    title: 'Operation Failed', 
+                    details: `Could not record log: ${errorMessage}. Please check your internet connection and try again.` 
+                });
+            }
             clearStatus();
         } finally {
             setIsLogging(false);
