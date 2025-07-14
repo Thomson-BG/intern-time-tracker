@@ -64,7 +64,10 @@ interface ApiResponse {
   userData?: any;
 }
 
-// Helper function for API requests - Enhanced with better CORS handling
+// Import mock API for fallback when connectivity is restricted
+import mockGoogleSheetsAPI from './mockGoogleSheetsApi';
+
+// Helper function for API requests - Enhanced with better CORS handling and mock fallback
 async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiResponse> {
   try {
     console.log(`Making request to: ${url}`, options);
@@ -108,24 +111,34 @@ async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiR
   } catch (error) {
     console.error('Google Sheets API request failed after retries:', error);
     
-    // Check if this is a CORS error
-    const isCorsError = error.message?.includes('CORS') || 
-                       error.message?.includes('Access to fetch') || 
-                       error.message?.includes('Failed to fetch');
+    // Check if this is a CORS error or network connectivity issue
+    const isConnectivityError = error.message?.includes('CORS') || 
+                               error.message?.includes('Access to fetch') || 
+                               error.message?.includes('Failed to fetch') ||
+                               error.message?.includes('ERR_BLOCKED_BY_CLIENT');
     
-    if (isCorsError) {
-      console.error('🚨 CORS ERROR DETECTED 🚨');
-      console.error('This means the Google Apps Script needs to be updated with proper CORS headers.');
-      console.error('Please update your Google Apps Script with the code from FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js');
-      console.error('📋 DEPLOYMENT STEPS:');
-      console.error('1. Go to: https://script.google.com/home');
-      console.error('2. Find your deployed script or create a new one');
-      console.error('3. Replace ALL code with the content from FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js');
-      console.error('4. Save and deploy as web app with "Execute as: Me" and "Who has access: Anyone"');
-      console.error('5. Copy the new deployment URL and update GOOGLE_SHEETS_API constant if needed');
+    if (isConnectivityError) {
+      console.error('🚨 CONNECTIVITY ERROR DETECTED 🚨');
+      console.error('This appears to be a network connectivity or firewall issue.');
+      console.error('📋 POSSIBLE SOLUTIONS:');
+      console.error('1. Check if firewall is blocking access to Google Apps Script');
+      console.error('2. Verify Google Apps Script deployment with proper CORS headers');
+      console.error('3. Try accessing the script URL directly in browser');
+      console.error('4. Use mock mode for testing: window.mockGoogleSheetsAPI.enable()');
+      
+      // Try mock API as fallback if available and enabled
+      try {
+        console.log('🔄 Attempting to use mock API fallback...');
+        const mockResult = await mockGoogleSheetsAPI.mockRequest(url, options);
+        console.log('✅ Mock API succeeded:', mockResult);
+        return { success: true, data: mockResult };
+      } catch (mockError) {
+        console.warn('❌ Mock API also failed:', mockError);
+        console.error('💡 To enable mock mode, run: window.mockGoogleSheetsAPI.enable()');
+      }
       
       // For CORS errors, provide a more specific error message
-      throw new Error('GOOGLE_APPS_SCRIPT_UPDATE_REQUIRED: The Google Apps Script deployment needs to be updated with proper CORS headers. Please follow the deployment instructions in the console and the FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js file.');
+      throw new Error('CONNECTIVITY_ERROR: Network connectivity or firewall is blocking access to Google Apps Script. Try enabling mock mode for testing: window.mockGoogleSheetsAPI.enable()');
     }
     
     // For development mode, provide fallback data for GET requests only
