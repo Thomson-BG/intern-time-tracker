@@ -1,0 +1,16 @@
+name: Copilot Agent with Firewall Disabled
+
+on: [push]
+
+jobs:
+  disable-firewall:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: 'false'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Add your Copilot Agent setup or other steps here
+      - name: Example step
+        run: echo "Copilot Agent firewall is disabled."
