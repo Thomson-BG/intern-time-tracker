@@ -8,11 +8,15 @@ import AbsencePanel from '../components/AbsencePanel';
 import AdminPanel from '../components/AdminPanel';
 import AdminLogin from '../components/AdminLogin';
 import StatusDisplay from '../components/StatusDisplay';
+import GoogleAppsScriptHelp from '../components/GoogleAppsScriptHelp';
 import StudentHelpPanel from '../components/StudentHelpPanel';
 import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
 
 // Import Google Sheets API services (restored primary backend)
 import googleSheetsApi, { timeLogsApi, absenceLogsApi, adminApi, TimeLog, AbsenceLog } from '../utils/googleSheetsApi';
+
+// Import test utility for development
+import '../utils/testCorsHandling';
 
 // Helper functions
 const getDeviceId = async () => {
@@ -67,6 +71,7 @@ const App: React.FC = () => {
     const [location, setLocation] = useState<LocationState>({ status: 'Location will be captured on check-in/out.' });
     const [backendHealthy, setBackendHealthy] = useState<boolean | null>(null);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
+    const [showGoogleAppsScriptHelp, setShowGoogleAppsScriptHelp] = useState(false);
 
     const clearStatus = () => setTimeout(() => setStatus(null), 5000);
 
@@ -87,12 +92,13 @@ const App: React.FC = () => {
         } catch (error) {
             console.warn('Could not check current status:', error);
             
-            // Handle CORS errors specifically
-            if (error.message?.includes('CORS_ERROR')) {
+            // Handle CORS/Google Apps Script errors specifically
+            if (error.message?.includes('CORS_ERROR') || error.message?.includes('GOOGLE_APPS_SCRIPT_UPDATE_REQUIRED')) {
+                setShowGoogleAppsScriptHelp(true);
                 setStatus({ 
                     type: 'error', 
                     title: 'Google Apps Script Update Required', 
-                    details: 'The Google Apps Script needs to be updated with proper CORS headers. Please update the script and redeploy it.' 
+                    details: 'Click the help dialog for step-by-step deployment instructions.' 
                 });
                 clearStatus();
             }
@@ -203,12 +209,13 @@ const App: React.FC = () => {
             const errorMessage = error.message || 'An unknown error occurred.';
             console.error('Error during log action:', error);
             
-            // Handle CORS errors specifically
-            if (errorMessage.includes('CORS_ERROR')) {
+            // Handle CORS/Google Apps Script errors specifically
+            if (errorMessage.includes('CORS_ERROR') || errorMessage.includes('GOOGLE_APPS_SCRIPT_UPDATE_REQUIRED')) {
+                setShowGoogleAppsScriptHelp(true);
                 setStatus({ 
                     type: 'error', 
                     title: 'Google Apps Script Update Required', 
-                    details: 'The Google Apps Script needs to be updated with proper CORS headers. Please check the FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js file and update your script.' 
+                    details: 'Click the help dialog for step-by-step deployment instructions.' 
                 });
             } else {
                 setLocation({ status: `Error: ${errorMessage}`, error: errorMessage });
@@ -324,6 +331,9 @@ const App: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900">
+            {showGoogleAppsScriptHelp && (
+                <GoogleAppsScriptHelp onDismiss={() => setShowGoogleAppsScriptHelp(false)} />
+            )}
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-4xl mx-auto bg-black/20 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
                     <Header />

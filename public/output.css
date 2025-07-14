@@ -605,6 +605,10 @@ body {
   pointer-events: none;
 }
 
+.fixed{
+  position: fixed;
+}
+
 .absolute{
   position: absolute;
 }
@@ -782,6 +786,10 @@ body {
   height: 100%;
 }
 
+.max-h-\[80vh\]{
+  max-height: 80vh;
+}
+
 .min-h-screen{
   min-height: 100vh;
 }
@@ -814,6 +822,10 @@ body {
   min-width: 100%;
 }
 
+.max-w-2xl{
+  max-width: 42rem;
+}
+
 .max-w-4xl{
   max-width: 56rem;
 }
@@ -824,6 +836,10 @@ body {
 
 .flex-1{
   flex: 1 1 0%;
+}
+
+.shrink-0{
+  flex-shrink: 0;
 }
 
 .-translate-x-1\/2{
@@ -882,6 +898,10 @@ body {
 
 .items-center{
   align-items: center;
+}
+
+.justify-end{
+  justify-content: flex-end;
 }
 
 .justify-center{
@@ -970,12 +990,20 @@ body {
   overflow-x: auto;
 }
 
+.overflow-y-auto{
+  overflow-y: auto;
+}
+
 .whitespace-nowrap{
   white-space: nowrap;
 }
 
 .rounded{
   border-radius: 0.25rem;
+}
+
+.rounded-2xl{
+  border-radius: 1rem;
 }
 
 .rounded-3xl{
@@ -996,6 +1024,10 @@ body {
 
 .rounded-sm{
   border-radius: 0.125rem;
+}
+
+.rounded-xl{
+  border-radius: 0.75rem;
 }
 
 .rounded-r-lg{
@@ -1026,6 +1058,10 @@ body {
 
 .border-t{
   border-top-width: 1px;
+}
+
+.border-amber-500\/30{
+  border-color: rgb(245 158 11 / 0.3);
 }
 
 .border-blue-400{
@@ -1084,6 +1120,10 @@ body {
   border-color: rgb(255 255 255 / 0.3);
 }
 
+.bg-amber-900\/20{
+  background-color: rgb(120 53 15 / 0.2);
+}
+
 .bg-black{
   --tw-bg-opacity: 1;
   background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
@@ -1105,6 +1145,10 @@ body {
   background-color: rgb(59 130 246 / 0.2);
 }
 
+.bg-blue-900\/20{
+  background-color: rgb(30 58 138 / 0.2);
+}
+
 .bg-gray-500\/20{
   background-color: rgb(107 114 128 / 0.2);
 }
@@ -1113,9 +1157,18 @@ body {
   background-color: rgb(75 85 99 / 0.5);
 }
 
+.bg-gray-700{
+  --tw-bg-opacity: 1;
+  background-color: rgb(55 65 81 / var(--tw-bg-opacity, 1));
+}
+
 .bg-gray-800{
   --tw-bg-opacity: 1;
   background-color: rgb(31 41 55 / var(--tw-bg-opacity, 1));
+}
+
+.bg-gray-900\/90{
+  background-color: rgb(17 24 39 / 0.9);
 }
 
 .bg-green-400{
@@ -1139,6 +1192,10 @@ body {
 
 .bg-red-500\/20{
   background-color: rgb(239 68 68 / 0.2);
+}
+
+.bg-red-800\/50{
+  background-color: rgb(153 27 27 / 0.5);
 }
 
 .bg-red-900\/50{
@@ -1240,6 +1297,10 @@ body {
           background-clip: text;
 }
 
+.p-2{
+  padding: 0.5rem;
+}
+
 .p-3{
   padding: 0.75rem;
 }
@@ -1254,6 +1315,11 @@ body {
 
 .p-8{
   padding: 2rem;
+}
+
+.px-1{
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
 }
 
 .px-2{
@@ -1377,6 +1443,11 @@ body {
 
 .tracking-wider{
   letter-spacing: 0.05em;
+}
+
+.text-amber-400{
+  --tw-text-opacity: 1;
+  color: rgb(251 191 36 / var(--tw-text-opacity, 1));
 }
 
 .text-black{
@@ -1665,6 +1736,11 @@ body {
 
 .hover\:border-white\/30:hover{
   border-color: rgb(255 255 255 / 0.3);
+}
+
+.hover\:bg-gray-600:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgb(75 85 99 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-purple-700:hover{

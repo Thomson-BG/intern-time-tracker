@@ -1,6 +1,6 @@
 // Google Sheets API service for the intern time tracker
 // This service communicates with the Google Apps Script backend
-const GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec';
+const GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbw-C2m5u7nbISf9ps9AUoCCj5WV_wGf5TNm7E6rXavLMgyBPLjiqxykSHBtQAYjL8el/exec';
 
 // Google Sheets information - based on deployed Apps Script
 // Spreadsheet URL: https://docs.google.com/spreadsheets/d/1LVY9UfJq3pZr_Y7bF37n3JYnsOL1slTSMp7TnxAqLRI/edit?gid=0#gid=0
@@ -117,9 +117,15 @@ async function makeRequest(url: string, options: RequestInit = {}): Promise<ApiR
       console.error('🚨 CORS ERROR DETECTED 🚨');
       console.error('This means the Google Apps Script needs to be updated with proper CORS headers.');
       console.error('Please update your Google Apps Script with the code from FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js');
+      console.error('📋 DEPLOYMENT STEPS:');
+      console.error('1. Go to: https://script.google.com/home');
+      console.error('2. Find your deployed script or create a new one');
+      console.error('3. Replace ALL code with the content from FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js');
+      console.error('4. Save and deploy as web app with "Execute as: Me" and "Who has access: Anyone"');
+      console.error('5. Copy the new deployment URL and update GOOGLE_SHEETS_API constant if needed');
       
       // For CORS errors, provide a more specific error message
-      throw new Error('CORS_ERROR: The Google Apps Script needs to be updated. Check the console for details.');
+      throw new Error('GOOGLE_APPS_SCRIPT_UPDATE_REQUIRED: The Google Apps Script deployment needs to be updated with proper CORS headers. Please follow the deployment instructions in the console and the FINAL_CORRECTED_GOOGLE_APPS_SCRIPT.js file.');
     }
     
     // For development mode, provide fallback data for GET requests only
