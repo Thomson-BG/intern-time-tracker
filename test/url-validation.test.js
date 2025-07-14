@@ -8,8 +8,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const NEW_URL = 'https://script.google.com/macros/s/AKfycbwG6NJfEszOA-qEstt-gCY3Bn_QQghX2FfrJvALecYQPcOQO5yrpBQCg1yjiaJT0Pt9/exec';
-const OLD_URL = 'https://script.google.com/macros/s/AKfycbwCXc-dKoMKGxKoblHT6hVYu1XYbnnJX-_npLVM7r7BE1D-yc1LvnbMkZrronOk3OmB/exec';
+const NEW_URL = 'https://script.google.com/macros/s/AKfycbxzqM__6ZxYynWyIgfoqe1G7YhIVln9qLSk_GRsgJAxe_iY-WJEH80_VqLEtO9mxDUR/exec';
+const OLD_URL = 'https://script.google.com/macros/s/AKfycbw-C2m5u7nbISf9ps9AUoCCj5WV_wGf5TNm7E6rXavLMgyBPLjiqxykSHBtQAYjL8el/exec';
 
 function validateUrlInFile(filePath, description) {
   try {

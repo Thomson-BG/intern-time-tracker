@@ -8,7 +8,7 @@ import AbsencePanel from '../components/AbsencePanel';
 import AdminPanel from '../components/AdminPanel';
 import AdminLogin from '../components/AdminLogin';
 import StatusDisplay from '../components/StatusDisplay';
-import GoogleAppsScriptHelp from '../components/GoogleAppsScriptHelp';
+import GpsAccuracyModal from '../components/GpsAccuracyModal';
 import StudentHelpPanel from '../components/StudentHelpPanel';
 import { downloadTimeLogsPDF } from '../utils/downloadHelpers';
 
@@ -17,6 +17,9 @@ import googleSheetsApi, { timeLogsApi, absenceLogsApi, adminApi, TimeLog, Absenc
 
 // Import test utility for development
 import '../utils/testCorsHandling';
+
+// GPS accuracy limits (in meters)
+const GPS_ACCURACY_LIMIT = 50; // meters
 
 // Helper functions
 const getDeviceId = async () => {
@@ -71,7 +74,8 @@ const App: React.FC = () => {
     const [location, setLocation] = useState<LocationState>({ status: 'Location will be captured on check-in/out.' });
     const [backendHealthy, setBackendHealthy] = useState<boolean | null>(null);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
-    const [showGoogleAppsScriptHelp, setShowGoogleAppsScriptHelp] = useState(false);
+    const [showGpsAccuracyModal, setShowGpsAccuracyModal] = useState(false);
+    const [lastGpsAccuracy, setLastGpsAccuracy] = useState<number | undefined>();
 
     const clearStatus = () => setTimeout(() => setStatus(null), 5000);
 
@@ -169,6 +173,21 @@ const App: React.FC = () => {
             
             const { latitude, longitude, accuracy } = position.coords;
 
+            // Check GPS accuracy before proceeding
+            if (accuracy && accuracy > GPS_ACCURACY_LIMIT) {
+                setLastGpsAccuracy(accuracy);
+                setShowGpsAccuracyModal(true);
+                setLocation({ latitude, longitude, accuracy, status: `GPS accuracy too low: ${accuracy.toFixed(1)}m (need < ${GPS_ACCURACY_LIMIT}m)`, error: 'GPS_ACCURACY_ERROR' });
+                setStatus({ 
+                    type: 'error', 
+                    title: 'GPS Accuracy Issue', 
+                    details: `Location accuracy is ${accuracy.toFixed(1)} meters. Need less than ${GPS_ACCURACY_LIMIT} meters for check-in/out.` 
+                });
+                clearStatus();
+                setIsLogging(false);
+                return;
+            }
+
             setLocation({ latitude, longitude, accuracy, status: 'Location acquired successfully.' });
 
             const deviceId = await getDeviceId();
@@ -209,22 +228,12 @@ const App: React.FC = () => {
             const errorMessage = error.message || 'An unknown error occurred.';
             console.error('Error during log action:', error);
             
-            // Handle CORS/Google Apps Script errors specifically
-            if (errorMessage.includes('CORS_ERROR') || errorMessage.includes('GOOGLE_APPS_SCRIPT_UPDATE_REQUIRED')) {
-                setShowGoogleAppsScriptHelp(true);
-                setStatus({ 
-                    type: 'error', 
-                    title: 'Google Apps Script Update Required', 
-                    details: 'Click the help dialog for step-by-step deployment instructions.' 
-                });
-            } else {
-                setLocation({ status: `Error: ${errorMessage}`, error: errorMessage });
-                setStatus({ 
-                    type: 'error', 
-                    title: 'Operation Failed', 
-                    details: `Could not record log: ${errorMessage}. Please check your internet connection and try again.` 
-                });
-            }
+            setLocation({ status: `Error: ${errorMessage}`, error: errorMessage });
+            setStatus({ 
+                type: 'error', 
+                title: 'Operation Failed', 
+                details: `Could not record log: ${errorMessage}. Please check your internet connection and try again.` 
+            });
             clearStatus();
         } finally {
             setIsLogging(false);
@@ -331,8 +340,11 @@ const App: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900">
-            {showGoogleAppsScriptHelp && (
-                <GoogleAppsScriptHelp onDismiss={() => setShowGoogleAppsScriptHelp(false)} />
+            {showGpsAccuracyModal && (
+                <GpsAccuracyModal 
+                    onDismiss={() => setShowGpsAccuracyModal(false)} 
+                    accuracy={lastGpsAccuracy}
+                />
             )}
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-4xl mx-auto bg-black/20 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
