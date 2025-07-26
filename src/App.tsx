@@ -30,46 +30,48 @@ const App: React.FC = () => {
   const handleLogin = () => setIsAdmin(true);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-        <Header />
-        <div className="p-6">
-          {!isAdmin && <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />}
-          {status && <StatusDisplay {...status} />}
-          {!isAdmin ? (
-            <>
-              {activeTab === Tab.Time && (
-                <TimePanel
-                  userInfo={userInfo}
-                  setUserInfo={setUserInfo}
-                  onLogAction={handleLogAction}
-                  location={location}
-                  isLogging={isLogging}
-                />
-              )}
-              {activeTab === Tab.Absence && (
-                <AbsencePanel userInfo={userInfo} onAddAbsence={handleAddAbsence} />
-              )}
-              {activeTab === Tab.Timesheet && (
-                <>
-                  <TimesheetPanel logs={timeLogs} userInfo={userInfo} />
-                  <div className="mt-4 text-right">
-                    <button
-                      onClick={() => downloadTimeLogsPDF(timeLogs, userInfo)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                    >
-                      Download Timesheet PDF
-                    </button>
-                  </div>
-                </>
-              )}
-              <AdminLogin onLogin={handleLogin} />
-            </>
-          ) : (
-            <AdminPanel logs={timeLogs} absences={absenceLogs} onLogout={() => setIsAdmin(false)} />
-          )}
+    <div className="min-h-screen bg-csea-navy">
+      <div className="container mx-auto px-4 py-8 pb-20"> {/* Added bottom padding for fixed nav */}
+        <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+          <Header />
+          <div className="p-6">
+            {status && <StatusDisplay {...status} />}
+            {!isAdmin ? (
+              <>
+                {activeTab === Tab.Time && (
+                  <TimePanel
+                    userInfo={userInfo}
+                    setUserInfo={setUserInfo}
+                    onLogAction={handleLogAction}
+                    location={location}
+                    isLogging={isLogging}
+                  />
+                )}
+                {activeTab === Tab.Absence && (
+                  <AbsencePanel userInfo={userInfo} onAddAbsence={handleAddAbsence} />
+                )}
+                {activeTab === Tab.Timesheet && (
+                  <>
+                    <TimesheetPanel logs={timeLogs} userInfo={userInfo} />
+                    <div className="mt-4 text-right">
+                      <button
+                        onClick={() => downloadTimeLogsPDF(timeLogs, userInfo)}
+                        className="bg-csea-yellow text-csea-navy px-6 py-3 rounded-md hover:bg-yellow-400 font-semibold transition-colors"
+                      >
+                        Download Timesheet PDF
+                      </button>
+                    </div>
+                  </>
+                )}
+                <AdminLogin onLogin={handleLogin} />
+              </>
+            ) : (
+              <AdminPanel logs={timeLogs} absences={absenceLogs} onLogout={() => setIsAdmin(false)} />
+            )}
+          </div>
         </div>
       </div>
+      {!isAdmin && <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />}
     </div>
   );
 };
