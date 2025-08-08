@@ -9,6 +9,7 @@ import TimesheetPanel from '../components/TimesheetPanel';
 import StatusDisplay from '../components/StatusDisplay';
 import AdminLogin from '../components/AdminLogin';
 import AdminPanel from '../components/AdminPanel';
+import InstallButton from '../components/InstallButton';
 import { Tab } from '../types/Tab';  // Import the Tab enum from the correct location
 
 const App: React.FC = () => {
@@ -68,6 +69,9 @@ const App: React.FC = () => {
           ) : (
             <AdminPanel logs={timeLogs} absences={absenceLogs} onLogout={() => setIsAdmin(false)} />
           )}
+          
+          {/* Install Button - shows at bottom of app */}
+          <InstallButton />
         </div>
       </div>
     </div>
