@@ -1,21 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import useLocalStorage from './hooks/useLocalStorage';
-import { Tab, TimeLog, AbsenceLog, UserInfo, LocationState } from './types';
-import AdminPanel from './components/AdminPanel'; // Make sure this component is ready to fetch its own data
-import { downloadTimeLogsPDF } from './utils/downloadHelpers';
+import useLocalStorage from '../hooks/useLocalStorage';
+import { Tab, TimeLog, AbsenceLog, UserInfo, LocationState } from '../types';
+import AdminPanel from '../components/AdminPanel'; // Make sure this component is ready to fetch its own data
+import { downloadTimeLogsPDF, downloadInternCertificatePDF } from './downloadHelpers';
 
-// Import Appwrite services and constants
-import {
-    account,
-    databases,
-    ID,
-    Query,
-    Permission,
-    Role,
-    APPWRITE_DATABASE_ID,
-    APPWRITE_TIMELOGS_COLLECTION_ID,
-    APPWRITE_ABENCELOGS_COLLECTION_ID,
-} from './utils/appwrite';
+// Import Appwrite services and configure
+import { Client, Account, Databases, ID, Query, Permission, Role } from 'appwrite';
+
+// Initialize Appwrite client
+const client = new Client()
+    .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://nyc.cloud.appwrite.io/v1')
+    .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID || '686cc4ed002aec037736');
+
+// Initialize Appwrite services
+export const account = new Account(client);
+export const databases = new Databases(client);
+
+// Define constants from appwrite.json
+export const APPWRITE_DATABASE_ID = '686d4fff002269d3350d';
+export const APPWRITE_TIMELOGS_COLLECTION_ID = 'timeLogsCollection';
+export const APPWRITE_ABENCELOGS_COLLECTION_ID = 'absenceLogsCollection';
+
+// Export Query, Permission, Role, ID for use in components
+export { ID, Query, Permission, Role };
 
 // --- HELPER FUNCTIONS ---
 const getDeviceId = async () => {
@@ -292,6 +299,16 @@ const TimesheetPanel: React.FC<TimesheetPanelProps> = ({ userInfo }) => {
         downloadTimeLogsPDF(filteredLogs, `Timesheet for ${studentId}`, prefix);
     };
 
+    const handleDownloadCertificate = () => {
+        // Use userInfo for the certificate, but ensure we have the current student ID
+        const certificateUserInfo = {
+            firstName: userInfo.firstName,
+            lastName: userInfo.lastName,
+            employeeId: studentId || userInfo.employeeId
+        };
+        downloadInternCertificatePDF(filteredLogs, certificateUserInfo);
+    };
+
     return (
         <div className="slide-in">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
@@ -305,9 +322,14 @@ const TimesheetPanel: React.FC<TimesheetPanelProps> = ({ userInfo }) => {
                         </button>
                     </div>
                 </div>
-                <button onClick={handleDownloadPdf} disabled={!filteredLogs.length} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-md text-sm disabled:bg-gray-400 disabled:cursor-not-allowed">
-                    Download PDF
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <button onClick={handleDownloadPdf} disabled={!filteredLogs.length} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-md text-sm disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        Download Timesheet
+                    </button>
+                    <button onClick={handleDownloadCertificate} disabled={!filteredLogs.length || !userInfo.firstName || !userInfo.lastName} className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-3 rounded-md text-sm disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        Download Certificate
+                    </button>
+                </div>
             </div>
             {logError && <StatusDisplay type="error" title="Timesheet Error" details={logError} />}
             {loadingLogs && <StatusDisplay type="info" title="Loading" details="Fetching timesheet data..." />}
