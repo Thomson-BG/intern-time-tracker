@@ -8,9 +8,10 @@ interface TabBarProps {
 
 const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: Tab.Time,      label: 'Time' },
-    { id: Tab.Absence,   label: 'Absence' },
-    { id: Tab.Timesheet, label: 'Timesheet' },
+    { id: Tab.Time,        label: 'Time' },
+    { id: Tab.Absence,     label: 'Absence' },
+    { id: Tab.Timesheet,   label: 'Timesheet' },
+    { id: Tab.SafetyTests, label: 'Safety Tests' },
   ];
 
   return (
