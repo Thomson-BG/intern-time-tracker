@@ -2,6 +2,7 @@ export enum Tab {
   Time = 'Time',
   Absence = 'Absence',
   Timesheet = 'Timesheet',
+  SafetyTests = 'Safety Tests',
 }
 
 export interface UserInfo {
@@ -35,4 +36,36 @@ export interface LocationState {
     accuracy?: number;
     error?: string;
     status: string;
+}
+
+export interface SafetyTestQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+}
+
+export interface SafetyTest {
+  id: string;
+  title: string;
+  description: string;
+  questions: SafetyTestQuestion[];
+}
+
+export interface TestResult {
+  testId: string;
+  score: number;
+  percentage: number;
+  passed: boolean;
+  answers: number[];
+  completedAt: string;
+}
+
+export interface Certificate {
+  studentName: string;
+  studentId: string;
+  testTitle: string;
+  score: number;
+  completedAt: string;
+  certificateId: string;
 }

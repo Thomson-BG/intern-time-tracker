@@ -6,6 +6,7 @@ import TabBar from '../components/TabBar';
 import TimePanel from '../components/TimePanel';
 import AbsencePanel from '../components/AbsencePanel';
 import TimesheetPanel from '../components/TimesheetPanel';
+import SafetyTestPanel from '../components/SafetyTestPanel';
 import StatusDisplay from '../components/StatusDisplay';
 import AdminLogin from '../components/AdminLogin';
 import AdminPanel from '../components/AdminPanel';
@@ -63,6 +64,9 @@ const App: React.FC = () => {
                     </button>
                   </div>
                 </>
+              )}
+              {activeTab === Tab.SafetyTests && (
+                <SafetyTestPanel userInfo={userInfo} />
               )}
               <AdminLogin onLogin={handleLogin} />
             </>
