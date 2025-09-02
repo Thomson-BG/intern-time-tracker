@@ -1,7 +1,5 @@
 import { TimeLog, AbsenceLog } from '../types';
 
-declare const jspdf: any;
-
 const downloadBlob = (content: string, filename: string, contentType: string) => {
   const blob = new Blob([content], { type: contentType });
   const url = URL.createObjectURL(blob);
@@ -57,36 +55,72 @@ export const downloadAbsencesCSV = (absences: AbsenceLog[], prefix: string) => {
 };
 
 // PDF Utilities
-export const downloadTimeLogsPDF = (logs: TimeLog[], title: string, prefix: string) => {
-  const { jsPDF } = jspdf;
-  const doc = new jsPDF();
-  doc.text(title, 14, 16);
-  (doc as any).autoTable({
-    startY: 20,
-    head: [['Action', 'Name', 'Student ID', 'Timestamp', 'Duration', 'Location (Lat, Lng)', 'Device']],
-    body: logs.map(l => [
-        l.action, 
-        `${l.firstName} ${l.lastName}`, 
-        l.employeeId, 
-        l.timestamp, 
-        l.duration || '', 
-        l.latitude && l.longitude ? `${l.latitude.toFixed(4)}, ${l.longitude.toFixed(4)}` : 'N/A', 
-        l.deviceName
-    ]),
-  });
-  doc.save(`${prefix}_time_logs.pdf`);
+export const downloadTimeLogsPDF = (logs: TimeLog[], userInfo?: any) => {
+  // Check if jsPDF is available
+  if (typeof window !== 'undefined' && !(window as any).jspdf) {
+    console.warn('jsPDF not available - falling back to CSV download');
+    const prefix = userInfo ? `${userInfo.firstName}_${userInfo.lastName}` : 'timesheet';
+    downloadTimeLogsCSV(logs, prefix);
+    return;
+  }
+
+  try {
+    const { jsPDF } = (window as any).jspdf;
+    const doc = new jsPDF();
+    const title = userInfo ? `${userInfo.firstName} ${userInfo.lastName} - Time Logs` : 'Time Logs';
+    const prefix = userInfo ? `${userInfo.firstName}_${userInfo.lastName}` : 'timesheet';
+    
+    doc.text(title, 14, 16);
+    (doc as any).autoTable({
+      startY: 20,
+      head: [['Action', 'Name', 'Student ID', 'Timestamp', 'Duration', 'Location (Lat, Lng)', 'Device']],
+      body: logs.map(l => [
+          l.action, 
+          `${l.firstName} ${l.lastName}`, 
+          l.employeeId, 
+          l.timestamp, 
+          l.duration || '', 
+          l.latitude && l.longitude ? `${l.latitude.toFixed(4)}, ${l.longitude.toFixed(4)}` : 'N/A', 
+          l.deviceName
+      ]),
+    });
+    doc.save(`${prefix}_time_logs.pdf`);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    console.warn('PDF generation failed - falling back to CSV download');
+    const prefix = userInfo ? `${userInfo.firstName}_${userInfo.lastName}` : 'timesheet';
+    downloadTimeLogsCSV(logs, prefix);
+  }
 };
 
-export const downloadAbsencesPDF = (absences: AbsenceLog[], title: string, prefix: string) => {
-  const { jsPDF } = jspdf;
-  const doc = new jsPDF();
-  doc.text(title, 14, 16);
-  (doc as any).autoTable({
-    startY: 20,
-    head: [['Name', 'Student ID', 'Absence Date', 'Reason', 'Submitted On']],
-    body: absences.map(a => [`${a.firstName} ${a.lastName}`, a.employeeId, a.date, a.reason, a.submitted]),
-  });
-  doc.save(`${prefix}_absence_logs.pdf`);
+export const downloadAbsencesPDF = (absences: AbsenceLog[], userInfo?: any) => {
+  // Check if jsPDF is available
+  if (typeof window !== 'undefined' && !(window as any).jspdf) {
+    console.warn('jsPDF not available - falling back to CSV download');
+    const prefix = userInfo ? `${userInfo.firstName}_${userInfo.lastName}` : 'absences';
+    downloadAbsencesCSV(absences, prefix);
+    return;
+  }
+
+  try {
+    const { jsPDF } = (window as any).jspdf;
+    const doc = new jsPDF();
+    const title = userInfo ? `${userInfo.firstName} ${userInfo.lastName} - Absence Logs` : 'Absence Logs';
+    const prefix = userInfo ? `${userInfo.firstName}_${userInfo.lastName}` : 'absences';
+    
+    doc.text(title, 14, 16);
+    (doc as any).autoTable({
+      startY: 20,
+      head: [['Name', 'Student ID', 'Absence Date', 'Reason', 'Submitted On']],
+      body: absences.map(a => [`${a.firstName} ${a.lastName}`, a.employeeId, a.date, a.reason, a.submitted]),
+    });
+    doc.save(`${prefix}_absence_logs.pdf`);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    console.warn('PDF generation failed - falling back to CSV download');
+    const prefix = userInfo ? `${userInfo.firstName}_${userInfo.lastName}` : 'absences';
+    downloadAbsencesCSV(absences, prefix);
+  }
 };
 
 

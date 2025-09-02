@@ -1,3 +1,4 @@
+/* Import Google Fonts with fallback handling */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* 2) Tailwind directives */
@@ -8,7 +9,8 @@
 /* 3) Custom base styles */
 @layer base {
   body {
-    font-family: 'Inter', sans-serif;
+    /* Fallback font stack in case Inter fails to load */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
 }
 
