@@ -166,9 +166,47 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         });
     }, [absenceLogs, filterEmployeeId]);
 
+    // Calculate summary statistics
+    const summaryStats = useMemo(() => {
+        const totalEmployees = new Set(timeLogs.map(log => log.employeeId)).size;
+        const todayLogs = timeLogs.filter(log => {
+            const logDate = new Date(Number(log.rawTimestamp)).toISOString().split('T')[0];
+            return logDate === selectedDate;
+        });
+        const checkedInToday = todayLogs.filter(log => log.action === 'IN').length;
+        const totalAbsences = absenceLogs.length;
+
+        return {
+            totalEmployees,
+            checkedInToday,
+            totalAbsences,
+            totalLogs: timeLogs.length
+        };
+    }, [timeLogs, absenceLogs, selectedDate]);
+
     return (
         <div className="slide-in">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Admin Panel</h2>
+
+            {/* Summary Statistics Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-blue-600 rounded-lg p-4 text-center shadow-lg">
+                    <div className="text-3xl font-bold text-white">{summaryStats.totalEmployees}</div>
+                    <div className="text-sm font-bold text-black bg-white rounded px-2 py-1 mt-2">Total Employees</div>
+                </div>
+                <div className="bg-blue-600 rounded-lg p-4 text-center shadow-lg">
+                    <div className="text-3xl font-bold text-white">{summaryStats.checkedInToday}</div>
+                    <div className="text-sm font-bold text-black bg-white rounded px-2 py-1 mt-2">Checked In Today</div>
+                </div>
+                <div className="bg-blue-600 rounded-lg p-4 text-center shadow-lg">
+                    <div className="text-3xl font-bold text-white">{summaryStats.totalAbsences}</div>
+                    <div className="text-sm font-bold text-black bg-white rounded px-2 py-1 mt-2">Total Absences</div>
+                </div>
+                <div className="bg-blue-600 rounded-lg p-4 text-center shadow-lg">
+                    <div className="text-3xl font-bold text-white">{summaryStats.totalLogs}</div>
+                    <div className="text-sm font-bold text-black bg-white rounded px-2 py-1 mt-2">Total Time Logs</div>
+                </div>
+            </div>
 
             <div className="flex justify-end mb-6 space-x-2">
                 <button onClick={() => { fetchTimeLogs(); fetchAbsenceLogs(); }} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center gap-2">
